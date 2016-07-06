@@ -5,7 +5,7 @@
       <paths name="shanpao">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="sample" />
+            <mapping local="$PROJECT_DIR$" web="LeeDemo" />
           </mappings>
         </serverdata>
       </paths>
