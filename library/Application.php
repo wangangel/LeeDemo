@@ -8,13 +8,12 @@
 
 namespace library;
 
-use library\exception\CodeException;
 use library\exception\FileNotFoundException;
 
 final class Application
 {
     /**
-     * @var Application|null 当前类的对象
+     * @var Application|null 当前类对象
      */
     private static $_instance = null;
 
@@ -34,16 +33,18 @@ final class Application
     private $_isRunning = false;
 
     /**
-     * __construct
+     * 构造器
      */
     public function __construct()
     {
+        $this->_checkDefinition();
+        $this->_registerPsr4();
         $this->_configInstance = new Config($this->_loadConfig());
-        $this->_dispatcherInstance = new Dispatcher();
+        $this->_dispatcherInstance = Dispatcher::getInstance();
     }
 
     /**
-     * __destruct
+     * 销毁
      */
     public function __destruct()
     {
@@ -100,16 +101,55 @@ final class Application
     }
 
     /**
-     * 开始分发
+     * 执行应用
      */
     public function run()
     {
         if ($this->_isRunning === true) {
-            throw new CodeException('an application instance already run');
+            throw new \Exception('禁止重复调用 Application->run()');
         }
 
         $this->_isRunning = true;
         $this->_dispatcherInstance->dispatch();
+    }
+
+    /**
+     * 检查必要的常量定义
+     *
+     * 这些常量必须在入口文件中定义，否则系统无法正常运行
+     */
+    private function _checkDefinition()
+    {
+        if (!defined('ENV')) {
+            throw new \Exception('常量 ENV 未定义');
+        }
+        if (!defined('MODULE')) {
+            throw new \Exception('常量 MODULE 未定义');
+        }
+        if (!defined('ROOT')) {
+            throw new \Exception('常量 ROOT 未定义');
+        }
+    }
+
+    /**
+     * 注册 PSR-4 autoload
+     */
+    private function _registerPsr4()
+    {
+        spl_autoload_register(function($className) {
+            $file = ROOT . SEP . str_replace('\\', SEP, $className) . '.php';
+            if (!is_file($file)) {
+                throw new \Exception('无法加载类文件: ' . $file);
+            }
+            require_once $file;
+            if (!class_exists($className, false) && !interface_exists($className, false)) {
+                if (strpos($className, 'Interface') > 0) {
+                    throw new \Exception('接口未定义: ' . $className);
+                } else {
+                    throw new \Exception('类未定义: ' . $className);
+                }
+            }
+        });
     }
 
     /**
@@ -121,14 +161,14 @@ final class Application
     private function _loadConfig()
     {
         // 在 /application/config 下会包含系统配置文件（必须有）
-        $systemConfigFile = ROOT . '/application/config/' . ENV . '.php';
+        $systemConfigFile = ROOT . SEP . 'application' . SEP . 'config' . SEP . ENV . '.php';
         if (!is_file($systemConfigFile)) {
-            throw new FileNotFoundException($systemConfigFile, 'system config file not found');
+            throw new FileNotFoundException($systemConfigFile, '系统配置文件丢失');
         }
         $config = include $systemConfigFile;
 
         // 如果当前 MODULE 下也定义了配置文件，则相同配置优先级更高
-        $moduleConfigFile = ROOT . '/application/module/' . MODULE . '/config/' . ENV . '.php';
+        $moduleConfigFile = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE . SEP . 'config' . SEP . ENV . '.php';
         if (is_file($moduleConfigFile)) {
             $applicationConfig = include $moduleConfigFile;
             $config = array_merge($config, $applicationConfig);
