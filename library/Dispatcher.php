@@ -46,6 +46,6 @@ final class Dispatcher
 
     public function dispatch()
     {
-        echo 'asdasd';
+        echo $_SERVER['REQUEST_METHOD'];
     }
 }
