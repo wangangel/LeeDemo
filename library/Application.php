@@ -18,9 +18,9 @@ final class Application
     private static $_instance = null;
 
     /**
-     * @var Config|null 配置对象
+     * @var array|null 配置数组
      */
-    private $_configInstance = null;
+    private $_config = null;
 
     /**
      * @var Dispatcher|null 分发器对象
@@ -39,32 +39,9 @@ final class Application
     {
         $this->_checkDefinition();
         $this->_registerPsr4();
-        $this->_configInstance = new Config($this->_loadConfig());
-        $this->_dispatcherInstance = Dispatcher::getInstance();
+        $this->_loadConfig();
+        $this->_dispatcherInstance = new Dispatcher();
     }
-
-    /**
-     * 销毁
-     */
-    public function __destruct()
-    {
-        self::$_instance = null;
-    }
-
-    /**
-     * 禁止序列化
-     */
-    private function __sleep() {}
-
-    /**
-     * 禁止反序列化
-     */
-    private function __wakeup() {}
-
-    /**
-     * 禁止克隆
-     */
-    private function __clone() {}
 
     /**
      * 获取当前类的对象
@@ -78,16 +55,6 @@ final class Application
         }
 
         return self::$_instance;
-    }
-
-    /**
-     * 获取配置对象
-     *
-     * @return Config|null
-     */
-    public function getConfigInstance()
-    {
-        return $this->_configInstance;
     }
 
     /**
@@ -106,7 +73,7 @@ final class Application
     public function run()
     {
         if ($this->_isRunning === true) {
-            throw new \Exception('禁止重复调用 Application->run()');
+            throw new \Exception('禁止重复调用: Application->run()');
         }
 
         $this->_isRunning = true;
@@ -114,20 +81,15 @@ final class Application
     }
 
     /**
-     * 检查必要的常量定义
-     *
-     * 这些常量必须在入口文件中定义，否则系统无法正常运行
+     * 检查用户需要定义的常量
      */
     private function _checkDefinition()
     {
         if (!defined('ENV')) {
-            throw new \Exception('常量 ENV 未定义');
+            throw new \Exception('常量未定义: ENV');
         }
         if (!defined('MODULE')) {
-            throw new \Exception('常量 MODULE 未定义');
-        }
-        if (!defined('ROOT')) {
-            throw new \Exception('常量 ROOT 未定义');
+            throw new \Exception('常量未定义: MODULE');
         }
     }
 
@@ -155,7 +117,6 @@ final class Application
     /**
      * 加载配置
      *
-     * @return array
      * @throws FileNotFoundException
      */
     private function _loadConfig()
@@ -174,6 +135,45 @@ final class Application
             $config = array_merge($config, $applicationConfig);
         }
 
-        return $config;
+        $this->_config = $config;
+    }
+
+    /**
+     * 获取配置
+     *
+     * 使用：getConfig('system') / getConfig('db.master.host')，最多支持到三层
+     *
+     * @param string $name
+     * @return mixed
+     * @throws \Exception
+     */
+    public function getConfig($name)
+    {
+        if (!is_string($name)) {
+            throw new \Exception('参数仅接受字符串: Application->getConfig()');
+        }
+
+        $ret = null;
+        if (strpos($name, '.') > 0) {
+            $array = explode('.', $name);
+            switch (count($array)) {
+                case 2:
+                    $ret = isset($this->_config[$array[0]][$array[1]]) ? $this->_config[$array[0]][$array[1]] : null;
+                    break;
+                case 3:
+                    $ret = isset($this->_config[$array[0]][$array[1]][$array[2]]) ? $this->_config[$array[0]][$array[1]][$array[2]] : null;
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            $ret = isset($this->_config[$name]) ? $this->_config[$name] : null;
+        }
+
+        if (is_null($ret)) {
+            throw new \Exception('配置不存在: ' . $name);
+        }
+
+        return $ret;
     }
 }

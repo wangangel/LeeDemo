@@ -11,39 +11,21 @@ namespace library;
 final class Dispatcher
 {
     /**
-     * @var Dispatcher|null 当前类对象
+     * @var Request|null 请求对象
      */
-    private static $_instance = null;
+    private $_requestInstance = null;
 
     /**
-     * 禁止序列化
+     * 构造器
      */
-    private function __sleep() {}
-
-    /**
-     * 禁止反序列化
-     */
-    private function __wakeup() {}
-
-    /**
-     * 禁止克隆
-     */
-    private function __clone() {}
-
-    /**
-     * 获取当前类对象
-     *
-     * @return Dispatcher|null
-     */
-    public static function getInstance()
+    public function __construct()
     {
-        if (self::$_instance === null) {
-            self::$_instance = new self();
-        }
-
-        return self::$_instance;
+        $this->_requestInstance = new Request();
     }
 
+    /**
+     * 执行分发
+     */
     public function dispatch()
     {
         echo $_SERVER['REQUEST_METHOD'];

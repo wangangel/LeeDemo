@@ -15,6 +15,10 @@ final class Request
      */
     private $_method = null;
 
+    private $_controller = null;
+
+    private $_action = null;
+
     /**
      * $_GET
      *
