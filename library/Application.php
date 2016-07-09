@@ -13,7 +13,7 @@ use library\exception\FileNotFoundException;
 final class Application
 {
     /**
-     * @var Application|null 当前类对象
+     * @var Application|null 当前对象
      */
     private static $_instance = null;
 
@@ -23,9 +23,14 @@ final class Application
     private $_config = null;
 
     /**
-     * @var Dispatcher|null 分发器对象
+     * @var Request|null 请求对象
      */
-    private $_dispatcherInstance = null;
+    private $_requestInstance = null;
+
+    /**
+     * @var array 钩子对象数组
+     */
+    private $_hookInstanceArray = array();
 
     /**
      * 获取当前类对象
@@ -46,52 +51,28 @@ final class Application
      */
     public function __construct()
     {
-        $this->_checkDefinition();
         $this->_loadConfig();
-        $this->_bootstrap();
-        $this->_dispatcherInstance = new Dispatcher();
-    }
-
-    /**
-     * 检查用户定义的常量
-     */
-    private function _checkDefinition()
-    {
-        // 检查 ENV
-        if (!defined('ENV')) {
-            throw new \Exception('常量 ENV 未定义');
-        } else {
-            if (!in_array(ENV, ['development', 'test', 'production'], true)) {
-                throw new \Exception('常量 ENV 只能定义以下值中的一个: development / test / production');
-            }
-        }
-
-        // 检查 MODULE
-        if (!defined('MODULE')) {
-            throw new \Exception('常量 MODULE 未定义');
-        } else {
-            $moduleDir = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE;
-            if (!is_dir($moduleDir)) {
-                throw new \Exception('常量 MODULE 指定的应用目录不存在: ' . $moduleDir);
-            }
-        }
+        $this->_requestInstance = new Request();
     }
 
     /**
      * 加载配置
      *
+     * 在 /application/config/ 下必须包含系统配置文件
+     * 你也可以在 /application/module/[MODULE]/config/ 下定义应用配置文件，相同配置应用的优先级更高
+     *
      * @throws FileNotFoundException
      */
     private function _loadConfig()
     {
-        // 在 /application/config 下会包含系统配置文件（必须有）
+        // 系统配置
         $systemConfigFile = ROOT . SEP . 'application' . SEP . 'config' . SEP . ENV . '.php';
         if (!is_file($systemConfigFile)) {
             throw new FileNotFoundException($systemConfigFile, '系统配置文件丢失');
         }
         $config = include $systemConfigFile;
 
-        // 如果当前应用下也定义了配置文件，则相同配置优先级更高
+        // 应用配置
         $moduleConfigFile = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE . SEP . 'config' . SEP . ENV . '.php';
         if (is_file($moduleConfigFile)) {
             $applicationConfig = include $moduleConfigFile;
@@ -99,52 +80,6 @@ final class Application
         }
 
         $this->_config = $config;
-    }
-
-    /**
-     * 支持应用自身的初始化
-     *
-     * 在当前 MODULE 目录下放入 Bootstrap.php，则 Bootstrap 类中以 _init 开头的方法都将得到执行
-     *
-     * @throws \Exception
-     */
-    private function _bootstrap()
-    {
-        $bootstrapFile = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE . SEP . 'Bootstrap.php';
-        if (is_file($bootstrapFile)) {
-            require $bootstrapFile;
-
-            $class = 'application\\module\\' . MODULE . '\\Bootstrap';
-            if (!class_exists($class, false)) {
-                throw new \Exception('当前应用 Bootstrap 文件存在，但类未定义: ' . $bootstrapFile);
-            }
-
-            $obj = new $class();
-            $methodArr = get_class_methods($obj);
-            foreach ($methodArr as $method) {
-                if (substr($method, 0, 5) === '_init') {
-                    $obj->$method();
-                }
-            }
-        }
-    }
-
-    /**
-     * 执行分发
-     */
-    public function run()
-    {
-        $this->_dispatcherInstance->dispatch();
-    }
-
-    /**
-     * 获取分发器对象
-     *
-     * @return Dispatcher|null
-     */
-    public function getDispatcherInstance()
-    {
-        return $this->_dispatcherInstance;
     }
 
     /**
@@ -184,5 +119,88 @@ final class Application
         }
 
         return $ret;
+    }
+
+    /**
+     * 支持应用自身的初始化
+     *
+     * 当前 MODULE 应用目录下的 Bootstrap.php，执行其中所有以 _init 开头的方法
+     *
+     * 作用：
+     *      1、定义一些应用常量，或者执行一些应用初始化操作
+     *      2、另一个重要的功能：注册 Hook 对象（执行流程：new Application -> bootstrap -> run，run 中将执行埋好的钩子，所以只有在 bootstrap 这一步 registerHook 才能让钩子真正得到执行）
+     *
+     * 使用：
+     *      library\Application::getInstance()->bootstrap()->run()
+     *
+     * @return object
+     * @throws \Exception
+     */
+    public function bootstrap()
+    {
+        $bootstrapFile = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE . SEP . 'Bootstrap.php';
+        if (!is_file($bootstrapFile)) {
+            throw new FileNotFoundException($bootstrapFile, '当前应用的 Bootstrap 文件未找到');
+        }
+        require $bootstrapFile;
+
+        $class = 'application\\module\\' . MODULE . '\\Bootstrap';
+        if (!class_exists($class, false)) {
+            throw new \Exception('当前应用的 Bootstrap 文件存在，但类未定义: ' . $bootstrapFile);
+        }
+
+        $obj = new $class();
+        $methodArr = get_class_methods($obj);
+        foreach ($methodArr as $method) {
+            if (substr($method, 0, 5) === '_init') {
+                $obj->$method();
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * 执行分发
+     */
+    public function run()
+    {
+        echo 'run';
+    }
+
+    /**
+     * 获取请求对象
+     *
+     * @return Request|null
+     */
+    public function getRequestInstance()
+    {
+        return $this->_requestInstance;
+    }
+
+    /**
+     * 注册钩子对象
+     *
+     * 可以级联调用注册多个钩子，钩子执行次序同注册顺序：
+     *      $application->registerHook(new AHook())->registerHook(new BHook())
+     *
+     * @param HookInterface $hookInstance
+     * @return object
+     */
+    public function registerHook($hookInstance)
+    {
+        $this->_hookInstanceArray[] = $hookInstance;
+
+        return $this;
+    }
+
+    /**
+     * 获取钩子对象数组
+     *
+     * @return array
+     */
+    public function getHookInstanceArray()
+    {
+        return $this->_hookInstanceArray;
     }
 }

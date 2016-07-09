@@ -11,22 +11,22 @@ namespace library;
 class G
 {
     /**
-     * 默认模块
+     * @var string 默认模块
      */
     const defaultModule = 'www';
 
     /**
-     * 默认控制器
+     * @var string 默认控制器
      */
     const defaultController = 'index';
 
     /**
-     * 默认动作
+     * @var string 默认动作
      */
     const defaultAction = 'index';
 
     /**
-     * @var array set/get 存放的数据
+     * @var array 存放的数据
      */
     private static $_data = array();
 
@@ -42,7 +42,7 @@ class G
     public static function set($key, $value, $force = false)
     {
         if ($force === false && isset(self::$_data[$key])) {
-            throw new \Exception('G::set() [' . $key . '] 对应的键值已经存在，但您尝试在非强制的情况下覆盖它');
+            throw new \Exception('G::set() [' . $key . '] 无法在非强制的情况下覆盖已存在的键值');
         }
 
         self::$_data[$key] = $value;

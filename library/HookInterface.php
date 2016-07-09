@@ -8,7 +8,7 @@
 
 namespace library;
 
-interface PluginInterface
+interface HookInterface
 {
     /**
      * 执行路由前

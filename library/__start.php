@@ -26,6 +26,29 @@ define('ROOT', dirname(__DIR__));       // 根目录
 define('SEP', DIRECTORY_SEPARATOR);     // 当前系统下的路径分隔符
 
 /**
+ * 检查常量 ENV
+ */
+if (!defined('ENV')) {
+    exit('常量 ENV 未定义');
+} else {
+    if (!in_array(ENV, ['development', 'test', 'production'], true)) {
+        exit('常量 ENV 只能定义以下值中的一个: development / test / production');
+    }
+}
+
+/**
+ * 检查常量 MODULE
+ */
+if (!defined('MODULE')) {
+    exit('常量 MODULE 未定义');
+} else {
+    $moduleDir = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE;
+    if (!is_dir($moduleDir)) {
+        exit('常量 MODULE 指定的应用目录不存在: ' . $moduleDir);
+    }
+}
+
+/**
  * 时区
  */
 date_default_timezone_set('PRC');
@@ -57,7 +80,7 @@ spl_autoload_register(function($className) {
  * 运行应用
  */
 try{
-    library\Application::getInstance()->run();
+    library\Application::getInstance()->bootstrap()->run();
 } catch (\Exception $e) {
     echo $e->getMessage();
 }
