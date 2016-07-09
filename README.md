@@ -11,7 +11,7 @@ IN -> Application ( Dispatcher (Request -> Router -> Controller/Action -> Respon
 [yaf]
 new Application -> bootstrap -> run( Dispatcher->dispatch )
 
-其中 Dispatcher 对象下还挂有 Request 对象和钩子对象数组 pluginArray，bootstrap 时传入 Dispatcher 对象，这样可以在 bootstrap 中 Dispatcher->registerPlugin() 注册钩子对象，当 Dispatcher->dispatch() 就可以执行到这些钩子对象中的挂钩点
+其中 Dispatcher 对象下还挂有 Request 对象和钩子对象数组 pluginArray，bootstrap 时传入 Dispatcher 对象，这样可以在 bootstrap 中 Dispatcher->registerPlugin() 注册钩子对象，当 Dispatcher->dispatch() 时就可以执行到这些钩子对象中的挂钩点
 
 但是此项目选择简化掉 Dispatcher，原因如下：
 
