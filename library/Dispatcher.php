@@ -16,6 +16,11 @@ final class Dispatcher
     private $_requestInstance = null;
 
     /**
+     * @var array 插件对象数组
+     */
+    private $_hookInstanceArr = [];
+
+    /**
      * 构造器
      */
     public function __construct()
@@ -24,10 +29,30 @@ final class Dispatcher
     }
 
     /**
+     * 注册钩子对象
+     */
+    public function registerHook()
+    {
+
+    }
+
+    /**
      * 执行分发
+     *
+     * 1、
      */
     public function dispatch()
     {
+
+        // beforeRoute 钩子
+
+        // afterRoute 钩子
+
+        // beforeAction 钩子
+
+        // afterAction 钩子
+
+
         echo $_SERVER['REQUEST_METHOD'];
     }
 }

@@ -28,23 +28,7 @@ final class Application
     private $_dispatcherInstance = null;
 
     /**
-     * @var bool 阻止 run() 的重复调用
-     */
-    private $_isRunning = false;
-
-    /**
-     * 构造器
-     */
-    public function __construct()
-    {
-        $this->_checkDefinition();
-        $this->_registerPsr4();
-        $this->_loadConfig();
-        $this->_dispatcherInstance = new Dispatcher();
-    }
-
-    /**
-     * 获取当前类的对象
+     * 获取当前类对象
      *
      * @return Application|null
      */
@@ -58,60 +42,39 @@ final class Application
     }
 
     /**
-     * 获取分发器对象
-     *
-     * @return Dispatcher|null
+     * 构造器
      */
-    public function getDispatcherInstance()
+    public function __construct()
     {
-        return $this->_dispatcherInstance;
+        $this->_checkDefinition();
+        $this->_loadConfig();
+        $this->_bootstrap();
+        $this->_dispatcherInstance = new Dispatcher();
     }
 
     /**
-     * 执行应用
-     */
-    public function run()
-    {
-        if ($this->_isRunning === true) {
-            throw new \Exception('禁止重复调用: Application->run()');
-        }
-
-        $this->_isRunning = true;
-        $this->_dispatcherInstance->dispatch();
-    }
-
-    /**
-     * 检查用户需要定义的常量
+     * 检查用户定义的常量
      */
     private function _checkDefinition()
     {
+        // 检查 ENV
         if (!defined('ENV')) {
-            throw new \Exception('常量未定义: ENV');
+            throw new \Exception('常量 ENV 未定义');
+        } else {
+            if (!in_array(ENV, ['development', 'test', 'production'], true)) {
+                throw new \Exception('常量 ENV 只能定义以下值中的一个: development / test / production');
+            }
         }
-        if (!defined('MODULE')) {
-            throw new \Exception('常量未定义: MODULE');
-        }
-    }
 
-    /**
-     * 注册 PSR-4 autoload
-     */
-    private function _registerPsr4()
-    {
-        spl_autoload_register(function($className) {
-            $file = ROOT . SEP . str_replace('\\', SEP, $className) . '.php';
-            if (!is_file($file)) {
-                throw new \Exception('无法加载类文件: ' . $file);
+        // 检查 MODULE
+        if (!defined('MODULE')) {
+            throw new \Exception('常量 MODULE 未定义');
+        } else {
+            $moduleDir = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE;
+            if (!is_dir($moduleDir)) {
+                throw new \Exception('常量 MODULE 指定的应用目录不存在: ' . $moduleDir);
             }
-            require_once $file;
-            if (!class_exists($className, false) && !interface_exists($className, false)) {
-                if (strpos($className, 'Interface') > 0) {
-                    throw new \Exception('接口未定义: ' . $className);
-                } else {
-                    throw new \Exception('类未定义: ' . $className);
-                }
-            }
-        });
+        }
     }
 
     /**
@@ -128,7 +91,7 @@ final class Application
         }
         $config = include $systemConfigFile;
 
-        // 如果当前 MODULE 下也定义了配置文件，则相同配置优先级更高
+        // 如果当前应用下也定义了配置文件，则相同配置优先级更高
         $moduleConfigFile = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE . SEP . 'config' . SEP . ENV . '.php';
         if (is_file($moduleConfigFile)) {
             $applicationConfig = include $moduleConfigFile;
@@ -136,6 +99,52 @@ final class Application
         }
 
         $this->_config = $config;
+    }
+
+    /**
+     * 支持应用自身的初始化
+     *
+     * 在当前 MODULE 目录下放入 Bootstrap.php，则 Bootstrap 类中以 _init 开头的方法都将得到执行
+     *
+     * @throws \Exception
+     */
+    private function _bootstrap()
+    {
+        $bootstrapFile = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE . SEP . 'Bootstrap.php';
+        if (is_file($bootstrapFile)) {
+            require $bootstrapFile;
+
+            $class = 'application\\module\\' . MODULE . '\\Bootstrap';
+            if (!class_exists($class, false)) {
+                throw new \Exception('当前应用 Bootstrap 文件存在，但类未定义: ' . $bootstrapFile);
+            }
+
+            $obj = new $class();
+            $methodArr = get_class_methods($obj);
+            foreach ($methodArr as $method) {
+                if (substr($method, 0, 5) === '_init') {
+                    $obj->$method();
+                }
+            }
+        }
+    }
+
+    /**
+     * 执行分发
+     */
+    public function run()
+    {
+        $this->_dispatcherInstance->dispatch();
+    }
+
+    /**
+     * 获取分发器对象
+     *
+     * @return Dispatcher|null
+     */
+    public function getDispatcherInstance()
+    {
+        return $this->_dispatcherInstance;
     }
 
     /**
