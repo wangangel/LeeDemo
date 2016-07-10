@@ -14,7 +14,7 @@ IN -> Application ( Dispatcher (Request -> Router -> Controller/Action -> Respon
 
 2、Bootstrap 不需要传入 Dispatcher 对象，而是直接 Application::getInstance()->registerHook(new xxxHook()) 即可注册钩子；
 
-3、Router 直接 Application::getInstance()->getRequestInstance()->setControllerName() 解析路由并设置 controllerName 和 actionName，而不是像之前一样 Request 需要从 Application 到 Dispatcher 再“传递”到 Router，本质上参数传递对象也是引用，那 Request 挂在 Application 下，在这个前提之下，其它对象应该自己去获取句柄并操作；
+3、Router 直接 Application::getInstance()->getRequestInstance()->setControllerName() 解析路由并设置 controllerName 和 actionName，而不是像之前一样 Request 需要从 Application 到 Dispatcher 再“传递”到 Router，本质上参数传递对象也是引用，那 Request 挂在 Application 下，在这个前提之下，其它对象应该自己去获取句柄并操作（事实上 yaf 也有 Application::app()）；
 
 4、Controller 中也可以通过 Application::getInstance()->getRequestInstance()->getGlobalQuery('postId') 获取 url 参数等（当然这么长可以封装到基类中）；
 
