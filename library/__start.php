@@ -80,7 +80,7 @@ spl_autoload_register(function($className) {
  * 运行应用
  */
 try{
-    library\Application::getInstance()->bootstrap()->run();
+    (new library\Application())->bootstrap()->run();
 } catch (\Exception $e) {
     echo $e->getMessage();
 }

@@ -26,6 +26,16 @@ class G
     const defaultAction = 'index';
 
     /**
+     * @var string 控制器后缀
+     */
+    const controllerSuffix = 'Controller';
+
+    /**
+     * @var string 动作后缀
+     */
+    const actionSuffix = 'Action';
+
+    /**
      * @var array 存放的数据
      */
     private static $_data = array();

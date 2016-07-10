@@ -13,11 +13,6 @@ use library\exception\FileNotFoundException;
 final class Application
 {
     /**
-     * @var Application|null 当前对象
-     */
-    private static $_instance = null;
-
-    /**
      * @var array|null 配置数组
      */
     private $_config = null;
@@ -31,20 +26,6 @@ final class Application
      * @var array 钩子对象数组
      */
     private $_hookInstanceArray = array();
-
-    /**
-     * 获取当前类对象
-     *
-     * @return Application|null
-     */
-    public static function getInstance()
-    {
-        if (self::$_instance === null) {
-            self::$_instance = new self();
-        }
-
-        return self::$_instance;
-    }
 
     /**
      * 构造器
@@ -124,7 +105,7 @@ final class Application
     /**
      * 支持应用自身的初始化
      *
-     * 当前 MODULE 应用目录下的 Bootstrap.php，执行其中所有以 _init 开头的方法
+     * 当前 MODULE 应用目录下的 Bootstrap.php，执行其中所有以 _init 开头的方法，方法都将接收到 Application 对象作为参数
      *
      * 作用：
      *      1、定义一些应用常量，或者执行一些应用初始化操作
@@ -153,7 +134,7 @@ final class Application
         $methodArr = get_class_methods($obj);
         foreach ($methodArr as $method) {
             if (substr($method, 0, 5) === '_init') {
-                $obj->$method();
+                $obj->$method($this);
             }
         }
 
@@ -162,10 +143,25 @@ final class Application
 
     /**
      * 执行分发
+     *
+     * Action 都将接收到 Application 对象作为参数
      */
     public function run()
     {
-        echo 'run';
+        // todo: beforeRoute Hook
+
+        $routerInstance = new Router();
+        $routerInstance->route($this->_requestInstance);
+
+        // todo: afterRoute Hook
+
+        // todo: beforeDispatch Hook
+
+        $class = 'application\\module\\' . MODULE . '\\controller\\' . $this->_requestInstance->getControllerName();
+        $action = $this->_requestInstance->getActionName();
+        (new $class())->$action($this);
+
+        // todo: afterDispatch Hook
     }
 
     /**
@@ -187,7 +183,7 @@ final class Application
      * @param HookInterface $hookInstance
      * @return object
      */
-    public function registerHook($hookInstance)
+    public function registerHook(HookInterface $hookInstance)
     {
         $this->_hookInstanceArray[] = $hookInstance;
 

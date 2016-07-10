@@ -8,25 +8,37 @@
 
 namespace application\module\www;
 
+use library\Application;
+
 class Bootstrap
 {
-    public function _initXXX()
+    /**
+     * 测试 _init
+     *
+     * @param Application $applicationInstance
+     */
+    public function _initTest(Application $applicationInstance)
     {
-        echo 'www Bootstrap: _initXXX';
+        // test
     }
 
-    public function _initYYY()
+    /**
+     * 测试 Hook
+     *
+     * @param Application $applicationInstance
+     */
+    public function _initYYY(Application $applicationInstance)
     {
-        echo 'www Bootstrap: _initYYY';
+        // test
     }
 
-    public function _initZZZ()
+    /**
+     * 测试非 _init
+     *
+     * @param Application $applicationInstance
+     */
+    public function abc(Application $applicationInstance)
     {
-        echo 'www Bootstrap: _initZZZ';
-    }
-
-    public function abc()
-    {
-        echo 'www Bootstrap: abc';
+        // test
     }
 }

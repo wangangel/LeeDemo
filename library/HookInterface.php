@@ -13,36 +13,32 @@ interface HookInterface
     /**
      * 执行路由前
      *
-     * @param Request $request
-     * @param Response $response
+     * @param Application $applicationInstance
      * @return mixed
      */
-    public function beforeRoute(Request $request, Response $response);
+    public function beforeRoute(Application $applicationInstance);
 
     /**
      * 执行路由后
      *
-     * @param Request $request
-     * @param Response $response
+     * @param Application $applicationInstance
      * @return mixed
      */
-    public function afterRoute(Request $request, Response $response);
+    public function afterRoute(Application $applicationInstance);
 
     /**
      * 执行 action 前
      *
-     * @param Request $request
-     * @param Response $response
+     * @param Application $applicationInstance
      * @return mixed
      */
-    public function beforeAction(Request $request, Response $response);
+    public function beforeAction(Application $applicationInstance);
 
     /**
      * 执行 action 后
      *
-     * @param Request $request
-     * @param Response $response
+     * @param Application $applicationInstance
      * @return mixed
      */
-    public function afterAction(Request $request, Response $response);
+    public function afterAction(Application $applicationInstance);
 }
