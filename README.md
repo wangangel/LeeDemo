@@ -7,8 +7,11 @@ IN -> Application ( Dispatcher (Request -> Router -> Controller/Action -> Respon
 
 #### 关于 Dispatcher
 ---
+
 项目选择简化掉 yaf Dispatcher，原因如下：
+
 1、去掉了一个中间对象，这样 Request 和 hookInstanceArray（原来的 pluginArray） 直接挂到 Application 对象下；
+
 2、bootstrap 不需要传入 Dispatcher 对象，而是直接 Application::getInstance()->registerHook(new xxxHook()) 即可注册钩子；
 
 
