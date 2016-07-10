@@ -28,4 +28,4 @@ new Application -> bootstrap -> run( Dispatcher->dispatch )
 
 yaf 的 Request 对象从 Application 中创建出之后，传递给 Dispatcher，再通过 dispatch() 传递给 Router，并通过 handle() 传递给 Controller。并且 Dispatcher 在 Application 中被创建出之后还要传递给 Bootstrap。
 
-但在这个项目里，Application 最先被创建出来，而 Request 挂在它的下面，理论上可以在任何地方获得这两个对象（不再需要作为参数传递）：Application::getInstance()->getRequestInstance()。
+但在这个项目里，Dispatcher 已经废弃，Request 挂在 Application 下面，理论上可以在任何地方获得这两个对象（不再需要作为参数传递）：Application::getInstance()->getRequestInstance()。
