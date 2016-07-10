@@ -24,4 +24,4 @@ IN -> Application ( Dispatcher (Request -> Router -> Controller/Action -> Respon
 ---
 yaf 的 Request 对象从 Application 中创建出之后，传递给 Dispatcher，再通过 dispatch() 传递给 Router，并通过 handle() 传递给 Controller。并且 Dispatcher 在 Application 中被创建出之后还要传递给 Bootstrap。
 
-但在这个项目里，Dispatcher 已经废弃，Request 挂在 Application 下面，理论上可以在任何地方获得这两个对象（不再需要作为参数传递）：Application::getInstance()->getRequestInstance()，不需要传来传去，可以更直观的使用它们。
+但在这个项目里，Dispatcher 已经废弃，Request 挂在 Application 下面，理论上可以在任何地方获得这两个对象（不再需要作为参数传递）：在 Router 中 Application::getInstance()->getRequestInstance()，或者是在 Controller 里获取 url 参数：Application::getInstance()->getRequestInstance()->getGlobalQuery('postId')，不再将对象传来传去，而是更直观的使用它们。
