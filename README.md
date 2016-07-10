@@ -22,3 +22,8 @@ IN -> Application ( Dispatcher (Request -> Router -> Controller/Action -> Respon
 #### 关于 View
 ---
 拒绝视图引擎，所以并没有实现如 yaf 的 ViewInterface，视图的解析由 Controller 完成（也仅是 extract 和 ob）
+
+
+### 关于 Action
+---
+原则上 dir Module/class Controller/function action 已经足够满足绝大多数场景，如果说 action 大到需要实现 Action 对象来再深一级，那只能说明模块划分有问题~
