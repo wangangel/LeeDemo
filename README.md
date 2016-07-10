@@ -26,4 +26,4 @@ IN -> Application ( Dispatcher (Request -> Router -> Controller/Action -> Respon
 
 #### 关于 Action 类
 ---
-项目没有实现，原则上 dir Module > class Controller > function action 已经足够满足绝大多数场景，如果说 action 大到需要实现 Action 对象来再深一级，那只能说明模块划分有问题~
+该项目未实现，原则上 dir Module > class Controller > function action 已经足够满足绝大多数场景，如果说 action 大到需要实现 Action 对象来再深一级，那只能说明模块划分有问题~
