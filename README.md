@@ -5,7 +5,7 @@ first github project！@ 670554666@qq.com
 IN -> Application ( Dispatcher (Request -> Router -> Controller/Action -> Response) ) -> OUT
 
 
-#### 关于 Dispatcher
+#### 关于 Dispatcher 类
 ---
 
 项目选择简化掉 yaf Dispatcher，原因如下：
@@ -19,11 +19,11 @@ IN -> Application ( Dispatcher (Request -> Router -> Controller/Action -> Respon
 4、Controller 中也可以通过 Application::getInstance()->getRequestInstance()->getGlobalQuery('postId') 获取 url 参数等（当然这么长可以封装到基类中）；
 
 
-#### 关于 View
+#### 关于 View 类
 ---
 拒绝视图引擎，所以并没有实现如 yaf 的 ViewInterface，视图的解析由 Controller 完成（也仅是 extract 和 ob）
 
 
-### 关于 Action
+### 关于 Action 类
 ---
-原则上 dir Module/class Controller/function action 已经足够满足绝大多数场景，如果说 action 大到需要实现 Action 对象来再深一级，那只能说明模块划分有问题~
+原则上 dir Module > class Controller > function action 已经足够满足绝大多数场景，如果说 action 大到需要实现 Action 对象来再深一级，那只能说明模块划分有问题~
