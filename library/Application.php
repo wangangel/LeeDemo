@@ -28,6 +28,11 @@ final class Application
     private $_requestInstance = null;
 
     /**
+     * @var Response|null 应答对象
+     */
+    private $_responseInstance = null;
+
+    /**
      * @var array 钩子对象数组
      */
     private $_hookInstanceArray = array();
@@ -53,6 +58,7 @@ final class Application
     {
         $this->_loadConfig();
         $this->_requestInstance = new Request();
+        $this->_responseInstance = new Response();
     }
 
     /**
@@ -124,7 +130,7 @@ final class Application
     /**
      * 支持应用自身的初始化
      *
-     * 当前 MODULE 应用目录下的 Bootstrap.php，执行其中所有以 _init 开头的方法，方法都将接收到 Application 对象作为参数
+     * 当前 MODULE 应用目录下的 Bootstrap.php，执行其中所有以 _init 开头的方法
      *
      * 作用：
      *      1、定义一些应用常量，或者执行一些应用初始化操作
@@ -192,6 +198,16 @@ final class Application
     public function getRequestInstance()
     {
         return $this->_requestInstance;
+    }
+
+    /**
+     * 获取应答对象
+     *
+     * @return Response|null
+     */
+    public function getResponseInstance()
+    {
+        return $this->_responseInstance;
     }
 
     /**

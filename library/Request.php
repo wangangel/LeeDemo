@@ -26,11 +26,6 @@ final class Request
     private $_actionName = null;
 
     /**
-     * @var bool 是否已经路由过
-     */
-    private $_isRouted = false;
-
-    /**
      * $_GET
      *
      * 1、参数 $key 不指定则不会设置 $default 默认值和执行 $filter 操作
@@ -153,15 +148,15 @@ final class Request
     /**
      * 设置控制器名称
      *
+     * 原先有 $isRouted 协助判断是否路由过来禁止路由之后再次修改 controllerName
+     * 现在去掉这个限制，这样可以在 afterRoute Hook 中再次修改来定位到其它的 Controller，提供了一定的自由度
+     *
      * @param string $controllerName
      * @return object
      * @throws \Exception
      */
     public function setControllerName($controllerName)
     {
-        if ($this->_isRouted === true) {
-            throw new \Exception('当前 Request 对象已经被路由过，无法再重新设置控制器名称');
-        }
         $this->_controllerName = $controllerName;
 
         return $this;
@@ -170,28 +165,15 @@ final class Request
     /**
      * 设置动作名称
      *
+     * $isRouted 判断已去除，原因同上
+     *
      * @param string $actionName
      * @return object
      * @throws \Exception
      */
     public function setActionName($actionName)
     {
-        if ($this->_isRouted === true) {
-            throw new \Exception('当前 Request 对象已经被路由过，无法再重新设置动作名称');
-        }
         $this->_actionName = $actionName;
-
-        return $this;
-    }
-
-    /**
-     * 设置已经路由过
-     *
-     * @return object
-     */
-    public function setRouted()
-    {
-        $this->_isRouted = true;
 
         return $this;
     }
@@ -214,15 +196,5 @@ final class Request
     public function getActionName()
     {
         return $this->_actionName;
-    }
-
-    /**
-     * 获取是否路由过
-     *
-     * @return bool
-     */
-    public function getRouted()
-    {
-        return $this->_isRouted;
     }
 }

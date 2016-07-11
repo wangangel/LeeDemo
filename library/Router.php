@@ -21,7 +21,6 @@ final class Router
         $actionName = $requestInstance->getGlobalQuery('a', G::defaultAction, '/^[a-zA-Z]+$/') . G::actionSuffix;
 
         $requestInstance->setControllerName($controllerName)
-            ->setActionName($actionName)
-            ->setRouted(true);
+            ->setActionName($actionName);
     }
 }
