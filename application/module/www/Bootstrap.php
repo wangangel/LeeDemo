@@ -14,30 +14,24 @@ class Bootstrap
 {
     /**
      * 测试 _init
-     *
-     * @param Application $applicationInstance
      */
-    public function _initTest(Application $applicationInstance)
+    public function _initTest()
     {
         // test
     }
 
     /**
      * 测试 Hook
-     *
-     * @param Application $applicationInstance
      */
-    public function _initYYY(Application $applicationInstance)
+    public function _initYYY()
     {
         // test
     }
 
     /**
      * 测试非 _init
-     *
-     * @param Application $applicationInstance
      */
-    public function abc(Application $applicationInstance)
+    public function abc()
     {
         // test
     }

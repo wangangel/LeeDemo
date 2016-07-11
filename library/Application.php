@@ -13,6 +13,11 @@ use library\exception\FileNotFoundException;
 final class Application
 {
     /**
+     * @var Application|null 当前对象
+     */
+    private static $_instance = null;
+
+    /**
      * @var array|null 配置数组
      */
     private $_config = null;
@@ -26,6 +31,20 @@ final class Application
      * @var array 钩子对象数组
      */
     private $_hookInstanceArray = array();
+
+    /**
+     * 获取当前类对象
+     *
+     * @return Application|null
+     */
+    public static function getInstance()
+    {
+        if (self::$_instance === null) {
+            self::$_instance = new self();
+        }
+
+        return self::$_instance;
+    }
 
     /**
      * 构造器
@@ -134,7 +153,7 @@ final class Application
         $methodArr = get_class_methods($obj);
         foreach ($methodArr as $method) {
             if (substr($method, 0, 5) === '_init') {
-                $obj->$method($this);
+                $obj->$method();
             }
         }
 
@@ -151,7 +170,8 @@ final class Application
         // todo: beforeRoute Hook
 
         $routerInstance = new Router();
-        $routerInstance->route($this->_requestInstance);
+        $routerInstance->route();
+        unset($routerInstance);
 
         // todo: afterRoute Hook
 
@@ -159,7 +179,7 @@ final class Application
 
         $class = 'application\\module\\' . MODULE . '\\controller\\' . $this->_requestInstance->getControllerName();
         $action = $this->_requestInstance->getActionName();
-        (new $class())->$action($this);
+        (new $class())->$action();
 
         // todo: afterDispatch Hook
     }

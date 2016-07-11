@@ -12,11 +12,11 @@ final class Router
 {
     /**
      * 最简单的路由
-     *
-     * @param Request $requestInstance
      */
-    public function route(Request $requestInstance)
+    public function route()
     {
+        $requestInstance = Application::getInstance()->getRequestInstance();
+
         $controllerName = ucfirst($requestInstance->getGlobalQuery('c', G::defaultController, '/^[a-z]+$/')) . G::controllerSuffix;
         $actionName = $requestInstance->getGlobalQuery('a', G::defaultAction, '/^[a-zA-Z]+$/') . G::actionSuffix;
 

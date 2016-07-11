@@ -15,11 +15,9 @@ class IndexController extends ControllerAbstract
 {
     /**
      * 首页
-     *
-     * @param Application $applicationInstance
      */
-    public function indexAction(Application $applicationInstance)
+    public function indexAction()
     {
-        var_dump($applicationInstance);
+        var_dump(Application::getInstance());
     }
 }
