@@ -18,6 +18,11 @@ class IndexController extends ControllerAbstract
      */
     public function indexAction()
     {
-        var_dump(Application::getInstance());
+        return array(
+            'aaa' => '132',
+            'bbb' => '132',
+            'ccc' => '132',
+            'ddd' => '132'
+        );
     }
 }

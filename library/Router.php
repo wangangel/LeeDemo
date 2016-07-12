@@ -17,10 +17,9 @@ final class Router
     {
         $requestInstance = Application::getInstance()->getRequestInstance();
 
-        $controllerName = ucfirst($requestInstance->getGlobalQuery('c', G::defaultController, '/^[a-z]+$/')) . G::controllerSuffix;
-        $actionName = $requestInstance->getGlobalQuery('a', G::defaultAction, '/^[a-zA-Z]+$/') . G::actionSuffix;
+        $controllerName = $requestInstance->getGlobalQuery('c', G::DEFAULT_CONTROLLER, '/^[a-z]+$/');
+        $actionName = $requestInstance->getGlobalQuery('a', G::DEFAULT_ACTION, '/^[a-zA-Z]+$/');
 
-        $requestInstance->setControllerName($controllerName)
-            ->setActionName($actionName);
+        $requestInstance->setControllerName($controllerName)->setActionName($actionName);
     }
 }

@@ -23,7 +23,7 @@ define('START_MEMORY', memory_get_usage(true));     // 开始执行的内存用�
  * 系统常量
  */
 define('ROOT', dirname(__DIR__));       // 根目录
-define('SEP', DIRECTORY_SEPARATOR);     // 当前系统下的路径分隔符
+define('SP', DIRECTORY_SEPARATOR);      // 当前系统下的路径分隔符
 
 /**
  * 检查常量 ENV
@@ -42,7 +42,7 @@ if (!defined('ENV')) {
 if (!defined('MODULE')) {
     exit('常量 MODULE 未定义');
 } else {
-    $moduleDir = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE;
+    $moduleDir = ROOT . SP . 'application' . SP . 'module' . SP . MODULE;
     if (!is_dir($moduleDir)) {
         exit('常量 MODULE 指定的应用目录不存在: ' . $moduleDir);
     }
@@ -62,7 +62,7 @@ session_start();
  * 注册自动加载
  */
 spl_autoload_register(function($className) {
-    $file = ROOT . SEP . str_replace('\\', SEP, $className) . '.php';
+    $file = ROOT . SP . str_replace('\\', SP, $className) . '.php';
     if (!is_file($file)) {
         throw new \Exception('无法加载类文件: ' . $file);
     }

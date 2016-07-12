@@ -13,27 +13,27 @@ class G
     /**
      * @var string 默认模块
      */
-    const defaultModule = 'www';
+    const DEFAULT_MODULE = 'www';
 
     /**
      * @var string 默认控制器
      */
-    const defaultController = 'index';
+    const DEFAULT_CONTROLLER = 'index';
 
     /**
      * @var string 默认动作
      */
-    const defaultAction = 'index';
+    const DEFAULT_ACTION = 'index';
 
     /**
      * @var string 控制器后缀
      */
-    const controllerSuffix = 'Controller';
+    const CONTROLLER_SUFFIX = 'Controller';
 
     /**
      * @var string 动作后缀
      */
-    const actionSuffix = 'Action';
+    const ACTION_SUFFIX = 'Action';
 
     /**
      * @var array 存放的数据

@@ -28,11 +28,6 @@ final class Application
     private $_requestInstance = null;
 
     /**
-     * @var Response|null 应答对象
-     */
-    private $_responseInstance = null;
-
-    /**
      * @var array 钩子对象数组
      */
     private $_hookInstanceArray = array();
@@ -58,7 +53,6 @@ final class Application
     {
         $this->_loadConfig();
         $this->_requestInstance = new Request();
-        $this->_responseInstance = new Response();
     }
 
     /**
@@ -72,14 +66,14 @@ final class Application
     private function _loadConfig()
     {
         // 系统配置
-        $systemConfigFile = ROOT . SEP . 'application' . SEP . 'config' . SEP . ENV . '.php';
+        $systemConfigFile = ROOT . SP . 'application' . SP . 'config' . SP . ENV . '.php';
         if (!is_file($systemConfigFile)) {
             throw new FileNotFoundException($systemConfigFile, '系统配置文件丢失');
         }
         $config = include $systemConfigFile;
 
         // 应用配置
-        $moduleConfigFile = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE . SEP . 'config' . SEP . ENV . '.php';
+        $moduleConfigFile = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'config' . SP . ENV . '.php';
         if (is_file($moduleConfigFile)) {
             $applicationConfig = include $moduleConfigFile;
             $config = array_merge($config, $applicationConfig);
@@ -144,7 +138,7 @@ final class Application
      */
     public function bootstrap()
     {
-        $bootstrapFile = ROOT . SEP . 'application' . SEP . 'module' . SEP . MODULE . SEP . 'Bootstrap.php';
+        $bootstrapFile = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'Bootstrap.php';
         if (!is_file($bootstrapFile)) {
             throw new FileNotFoundException($bootstrapFile, '当前应用的 Bootstrap 文件未找到');
         }
@@ -181,13 +175,25 @@ final class Application
 
         // todo: afterRoute Hook
 
+        $viewInstance = new View();
+        $viewInstance->setTplPath(ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'view' . SP . $this->_requestInstance->getControllerName());
+
         // todo: beforeDispatch Hook
 
-        $class = 'application\\module\\' . MODULE . '\\controller\\' . $this->_requestInstance->getControllerName();
-        $action = $this->_requestInstance->getActionName();
-        (new $class())->$action();
+        $class = 'application\\module\\' . MODULE . '\\controller\\' . ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
+        $action = $this->_requestInstance->getActionName() . G::ACTION_SUFFIX;
+        $controller = new $class();
+        if (!method_exists($controller, $action)) {
+            throw new \Exception('控制器 ' . $class . ' 下未定义动作: ' . $action);
+        }
+        $ret = $controller->$action();
+
+        var_dump($ret);
 
         // todo: afterDispatch Hook
+
+        $responseInstance = new Response();
+        $responseInstance->response();
     }
 
     /**
@@ -198,16 +204,6 @@ final class Application
     public function getRequestInstance()
     {
         return $this->_requestInstance;
-    }
-
-    /**
-     * 获取应答对象
-     *
-     * @return Response|null
-     */
-    public function getResponseInstance()
-    {
-        return $this->_responseInstance;
     }
 
     /**

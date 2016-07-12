@@ -10,5 +10,8 @@ namespace library;
 
 class Response
 {
+    public function response()
+    {
 
+    }
 }
