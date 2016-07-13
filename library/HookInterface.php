@@ -11,34 +11,30 @@ namespace library;
 interface HookInterface
 {
     /**
-     * 执行路由前
+     * 路由前
      *
-     * @param Application $applicationInstance
      * @return mixed
      */
-    public function beforeRoute(Application $applicationInstance);
+    public function beforeRoute();
 
     /**
-     * 执行路由后
+     * 分发前
      *
-     * @param Application $applicationInstance
      * @return mixed
      */
-    public function afterRoute(Application $applicationInstance);
+    public function beforeDispatch();
 
     /**
-     * 执行 action 前
+     * 渲染前
      *
-     * @param Application $applicationInstance
      * @return mixed
      */
-    public function beforeAction(Application $applicationInstance);
+    public function beforeRender();
 
     /**
-     * 执行 action 后
+     * 响应前
      *
-     * @param Application $applicationInstance
      * @return mixed
      */
-    public function afterAction(Application $applicationInstance);
+    public function beforeResponse();
 }

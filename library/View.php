@@ -8,35 +8,43 @@
 
 namespace library;
 
+use library\exception\FileNotFoundException;
+
 class View
 {
     /**
      * @var string 视图路径
      */
-    private $_tplPath = '';
+    private $_viewPath = null;
 
     /**
-     * @var array 视图数据
+     * 构造器
      */
-    private $_tplData = array();
-
-    /**
-     * 设置视图路径
-     *
-     * @param string $path
-     */
-    public function setTplPath($path)
+    public function __construct()
     {
-        $this->_tplPath = $path;
+        // 暂时默认视图到这里（目前不提供 setViewPath()，也不支持第三方如 smarty / volt 等模版引擎，将来可扩展）
+        $this->_viewPath = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'view' . SP . Application::getInstance()->getRequestInstance()->getControllerName();
     }
 
     /**
-     * 获取视图路径
+     * 渲染视图并返回渲染后的数据
      *
+     * @param string $viewFileName
+     * @param array $data
      * @return string
+     * @throws FileNotFoundException
      */
-    public function getTplPath()
+    public function render($viewFileName, $data)
     {
-        return $this->_tplPath;
+        extract($data);
+        ob_start();
+        $viewFile = $this->_viewPath . SP . $viewFileName;
+        if (!is_file($viewFile)) {
+            throw new FileNotFoundException($viewFile, '视图文件丢失');
+        }
+        include($viewFile);
+        $ret = ob_get_clean();
+
+        return $ret;
     }
 }

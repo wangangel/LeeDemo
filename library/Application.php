@@ -23,9 +23,19 @@ final class Application
     private $_config = null;
 
     /**
+     * @var bool 是否渲染视图
+     */
+    private $_autoRender = true;
+
+    /**
      * @var Request|null 请求对象
      */
     private $_requestInstance = null;
+
+    /**
+     * @var Response|null 响应对象
+     */
+    private $_responseInstance = null;
 
     /**
      * @var array 钩子对象数组
@@ -53,6 +63,7 @@ final class Application
     {
         $this->_loadConfig();
         $this->_requestInstance = new Request();
+        $this->_responseInstance = new Response();
     }
 
     /**
@@ -122,6 +133,19 @@ final class Application
     }
 
     /**
+     * 设置是否渲染视图
+     *
+     * @param bool $autoRender
+     * @return object
+     */
+    public function setAutoRender($autoRender)
+    {
+        $this->_autoRender = $autoRender;
+
+        return $this;
+    }
+
+    /**
      * 支持应用自身的初始化
      *
      * 当前 MODULE 应用目录下的 Bootstrap.php，执行其中所有以 _init 开头的方法
@@ -169,17 +193,14 @@ final class Application
     {
         // todo: beforeRoute Hook
 
+        // 执行路由
         $routerInstance = new Router();
         $routerInstance->route();
         unset($routerInstance);
 
-        // todo: afterRoute Hook
-
-        $viewInstance = new View();
-        $viewInstance->setTplPath(ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'view' . SP . $this->_requestInstance->getControllerName());
-
         // todo: beforeDispatch Hook
 
+        // 执行分发：$controller->action()
         $class = 'application\\module\\' . MODULE . '\\controller\\' . ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
         $action = $this->_requestInstance->getActionName() . G::ACTION_SUFFIX;
         $controller = new $class();
@@ -188,12 +209,20 @@ final class Application
         }
         $ret = $controller->$action();
 
-        var_dump($ret);
+        // todo: beforeRender Hook
 
-        // todo: afterDispatch Hook
+        // 是否需要渲染视图
+        if ($this->_autoRender) {
+            $viewInstance = new View();
+            $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
+            unset($viewInstance);
+        }
+        $this->_responseInstance->setBody($ret);
 
-        $responseInstance = new Response();
-        $responseInstance->response();
+        // todo: beforeResponse Hook
+
+        // 执行响应
+        $this->_responseInstance->response();
     }
 
     /**
@@ -204,6 +233,16 @@ final class Application
     public function getRequestInstance()
     {
         return $this->_requestInstance;
+    }
+
+    /**
+     * 获取响应对象
+     *
+     * @return Response|null
+     */
+    public function getResponseInstance()
+    {
+        return $this->_responseInstance;
     }
 
     /**

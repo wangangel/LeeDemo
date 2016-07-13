@@ -11,11 +11,6 @@ namespace library;
 class G
 {
     /**
-     * @var string 默认模块
-     */
-    const DEFAULT_MODULE = 'www';
-
-    /**
      * @var string 默认控制器
      */
     const DEFAULT_CONTROLLER = 'index';

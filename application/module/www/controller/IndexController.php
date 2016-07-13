@@ -19,10 +19,10 @@ class IndexController extends ControllerAbstract
     public function indexAction()
     {
         return array(
-            'aaa' => '132',
-            'bbb' => '132',
-            'ccc' => '132',
-            'ddd' => '132'
+            'aaa' => '23432432',
+            'bbb' => 'assdsad',
+            'ccc' => 'dgsdfgfds',
+            'ddd' => 'sdfgfdsggsg'
         );
     }
 }
