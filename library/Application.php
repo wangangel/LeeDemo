@@ -198,18 +198,19 @@ final class Application
 
         // todo: beforeDispatch Hook
 
-        // 执行分发：$controller->action()
+        // 执行分发
         $class = 'application\\module\\' . MODULE . '\\controller\\' . ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
         $action = $this->_requestInstance->getActionName() . G::ACTION_SUFFIX;
-        $controller = new $class();
-        if (!method_exists($controller, $action)) {
+        $controllerInstance = new $class();
+        if (!method_exists($controllerInstance, $action)) {
             throw new \Exception('控制器 ' . $class . ' 下未定义动作: ' . $action);
         }
-        $ret = $controller->$action();
+        $ret = $controllerInstance->$action();
+        unset($controllerInstance);
 
         // todo: beforeRender Hook
 
-        // 是否需要渲染视图
+        // 是否渲染视图
         if ($this->_autoRender) {
             $viewInstance = new View();
             $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
