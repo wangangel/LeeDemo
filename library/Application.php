@@ -185,9 +185,7 @@ final class Application
     }
 
     /**
-     * 执行分发
-     *
-     * Action 都将接收到 Application 对象作为参数
+     * 执行应用
      */
     public function run()
     {
