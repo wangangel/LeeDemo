@@ -12,7 +12,7 @@ first github project！@ 670554666@qq.com
 
 4 - $ret = Controller->action()
 
-5 - $ret = View->render()
+5 - $ret = View->render($ret)
 
 6 - Response->setBody($ret)
 
