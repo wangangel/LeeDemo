@@ -81,7 +81,7 @@ interface DatabaseInterface
     /**
      * 连贯操作：WHERE
      *
-     * 只能调用一次
+     * 只调用一次
      *
      * where('id', 'eq', 1)
      *
@@ -107,6 +107,8 @@ interface DatabaseInterface
     /**
      * 连贯操作：ORDER BY
      *
+     * 只调用一次
+     *
      * order('id') / order('id', 'desc') / order(['id', 'asc'], ['score', 'desc'])
      *
      * 请不要实现一些诡异的写法，比如：order('id', 'score', 'desc') / order('id', 'asc', ['score', 'desc'])，本身从理解上也存在误导
@@ -122,6 +124,8 @@ interface DatabaseInterface
 
     /**
      * 连贯操作：LIMIT
+     *
+     * 只调用一次
      *
      * limit(1) / limit(1, 10)
      *
