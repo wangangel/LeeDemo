@@ -8,12 +8,7 @@
 <body>
     <div class="wrap">
         <div class="content">
-            <div class="header"></div>
-            <div class="menu">
-                <ul>
-                    <li><a href="">首页</a></li>
-                </ul>
-            </div>
+            <?php include dirname(__DIR__) . SP . '__header.php' ; ?>
             <div class="main">
                 <div class="primary">
                     sdsadads<br>

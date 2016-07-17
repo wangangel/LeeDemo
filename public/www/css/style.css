@@ -1,0 +1,21 @@
+
+
+* {margin:0;padding:0;}
+body {font-family:arial,sans-serif;font-size:12px;}
+ul,li {list-style:none;}
+
+
+
+.content {width:920px;margin:0 auto;}
+
+
+.header {height:150px;}
+.menu {height:35px;border-radius:1px;margin-bottom:35px;background-color:#fff;}
+.main {overflow:hidden;}
+.primary {float:left;width:700px;}
+.sidebar {float:right;width:200px;}
+
+
+
+
+.box {border:solid 1px #ddd;}

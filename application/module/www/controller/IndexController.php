@@ -10,6 +10,7 @@ namespace application\module\www\controller;
 
 use library\Application;
 use library\ControllerAbstract;
+use library\Session;
 
 class IndexController extends ControllerAbstract
 {
@@ -18,6 +19,8 @@ class IndexController extends ControllerAbstract
      */
     public function indexAction()
     {
+        $sess = Session::getInstance();
+
         return array(
             'aaa' => '23432432',
             'bbb' => 'assdsad',

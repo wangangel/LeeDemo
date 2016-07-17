@@ -22,8 +22,9 @@ define('START_MEMORY', memory_get_usage(true));     // 开始执行的内存用�
 /**
  * 系统常量
  */
-define('ROOT', dirname(__DIR__));       // 根目录
-define('SP', DIRECTORY_SEPARATOR);      // 当前系统下的路径分隔符
+define('ROOT', dirname(__DIR__));           // 根目录
+define('SP', DIRECTORY_SEPARATOR);          // 当前系统下的路径分隔符
+define('SESSION_SAVE_HANDLER', 'user');     // session.save_handler
 
 /**
  * 检查常量 ENV
@@ -49,14 +50,20 @@ if (!defined('MODULE')) {
 }
 
 /**
+ * 错误提示
+ */
+if (ENV === 'development' || ENV === 'test') {
+    error_reporting(E_ALL || E_NOTICE);
+    ini_set('display_errors', 1);
+} elseif (ENV === 'production') {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+}
+
+/**
  * 时区
  */
 date_default_timezone_set('PRC');
-
-/**
- * 开启 session
- */
-session_start();
 
 /**
  * 注册自动加载
