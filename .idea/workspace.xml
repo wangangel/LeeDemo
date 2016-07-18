@@ -31,11 +31,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="UserModel.php" pinned="false" current-in-tab="false">
+      <file leaf-file-name="UserModel.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/application/model/UserModel.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-21.12" vertical-offset="0" max-vertical-offset="752">
-              <caret line="33" column="41" selection-start-line="33" selection-start-column="41" selection-end-line="33" selection-end-column="41" />
+            <state vertical-scroll-proportion="0.79795396" vertical-offset="0" max-vertical-offset="782">
+              <caret line="39" column="23" selection-start-line="39" selection-start-column="23" selection-end-line="39" selection-end-column="23" />
               <folding>
                 <element signature="e#6#84#0#PHP" expanded="true" />
               </folding>
@@ -43,11 +43,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Mysqli.php" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Mysqli.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/library/database/Mysqli.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-1.0806242" vertical-offset="4447" max-vertical-offset="6368">
-              <caret line="226" column="96" selection-start-line="226" selection-start-column="96" selection-end-line="226" selection-end-column="96" />
+            <state vertical-scroll-proportion="-27.56" vertical-offset="3727" max-vertical-offset="6368">
+              <caret line="276" column="56" selection-start-line="276" selection-start-column="56" selection-end-line="276" selection-end-column="56" />
               <folding>
                 <element signature="e#6#80#0#PHP" expanded="true" />
                 <element signature="e#111#135#0#PHP" expanded="true" />
@@ -110,8 +110,8 @@
         <option value="$PROJECT_DIR$/library/database/DatabaseFactory.php" />
         <option value="$PROJECT_DIR$/library/Application.php" />
         <option value="$PROJECT_DIR$/library/G.php" />
-        <option value="$PROJECT_DIR$/application/model/UserModel.php" />
         <option value="$PROJECT_DIR$/library/database/Mysqli.php" />
+        <option value="$PROJECT_DIR$/application/model/UserModel.php" />
       </list>
     </option>
   </component>
@@ -1007,23 +1007,23 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/application/model/UserModel.php">
+    <entry file="file://$PROJECT_DIR$/library/database/Mysqli.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-21.12" vertical-offset="0" max-vertical-offset="752">
-          <caret line="33" column="41" selection-start-line="33" selection-start-column="41" selection-end-line="33" selection-end-column="41" />
+        <state vertical-scroll-proportion="-27.56" vertical-offset="3727" max-vertical-offset="6368">
+          <caret line="276" column="56" selection-start-line="276" selection-start-column="56" selection-end-line="276" selection-end-column="56" />
           <folding>
-            <element signature="e#6#84#0#PHP" expanded="true" />
+            <element signature="e#6#80#0#PHP" expanded="true" />
+            <element signature="e#111#135#0#PHP" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/library/database/Mysqli.php">
+    <entry file="file://$PROJECT_DIR$/application/model/UserModel.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-1.0806242" vertical-offset="4447" max-vertical-offset="6368">
-          <caret line="226" column="96" selection-start-line="226" selection-start-column="96" selection-end-line="226" selection-end-column="96" />
+        <state vertical-scroll-proportion="0.79795396" vertical-offset="0" max-vertical-offset="782">
+          <caret line="39" column="23" selection-start-line="39" selection-start-column="23" selection-end-line="39" selection-end-column="23" />
           <folding>
-            <element signature="e#6#80#0#PHP" expanded="true" />
-            <element signature="e#111#135#0#PHP" expanded="true" />
+            <element signature="e#6#84#0#PHP" expanded="true" />
           </folding>
         </state>
       </provider>

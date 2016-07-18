@@ -269,7 +269,7 @@ final class Mysqli implements DatabaseInterface
         );
 
         if (is_array($value)) {
-            $value = implode(',', $value);
+            $value = '(' . implode(',', $value) . ')';
         } elseif (is_string($value)) {
             $value = '"' . $value . '"';
         }
