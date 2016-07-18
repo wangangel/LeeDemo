@@ -8,7 +8,7 @@
 
 namespace library;
 
-class Session
+final class Session
 {
     /**
      * @var Session|null 当前对象

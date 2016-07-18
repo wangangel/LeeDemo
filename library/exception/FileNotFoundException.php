@@ -21,7 +21,7 @@ class FileNotFoundException extends ExceptionAbstract
      * 构造器
      *
      * @param string $filePath
-     * @param int $message
+     * @param string $message
      * @param int $code
      */
     public function __construct($filePath, $message, $code = 0)

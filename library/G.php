@@ -8,7 +8,7 @@
 
 namespace library;
 
-class G
+final class G
 {
     /**
      * @var string 默认控制器

@@ -10,7 +10,7 @@ namespace library;
 
 use library\exception\FileNotFoundException;
 
-class View
+final class View
 {
     /**
      * @var string 视图路径

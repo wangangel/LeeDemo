@@ -8,7 +8,7 @@
 
 namespace library;
 
-class Response
+final class Response
 {
     /**
      * @var string 响应的内容

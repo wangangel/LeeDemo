@@ -25,7 +25,7 @@ final class Application
     /**
      * @var bool 是否渲染视图
      */
-    private $_autoRender = true;
+    private $_viewRender = true;
 
     /**
      * @var Request|null 请求对象
@@ -133,16 +133,11 @@ final class Application
     }
 
     /**
-     * 设置是否渲染视图
-     *
-     * @param bool $autoRender
-     * @return object
+     * 关闭视图渲染
      */
-    public function setAutoRender($autoRender)
+    public function disableView()
     {
-        $this->_autoRender = $autoRender;
-
-        return $this;
+        $this->_viewRender = false;
     }
 
     /**
@@ -211,7 +206,7 @@ final class Application
         // todo: beforeRender Hook
 
         // 是否渲染视图
-        if ($this->_autoRender) {
+        if ($this->_viewRender) {
             $viewInstance = new View();
             $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
             unset($viewInstance);

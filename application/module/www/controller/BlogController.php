@@ -9,6 +9,8 @@
 namespace application\module\www\controller;
 
 use library\ControllerAbstract;
+use library\Application;
+use application\model\UserModel;
 
 class BlogController extends ControllerAbstract
 {
@@ -25,7 +27,10 @@ class BlogController extends ControllerAbstract
      */
     public function indexAction()
     {
+        $userModel = new UserModel();
+        $ret = $userModel->test();
 
+        var_dump($ret);
     }
 
     /**
