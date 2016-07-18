@@ -27,10 +27,7 @@ class BlogController extends ControllerAbstract
      */
     public function indexAction()
     {
-        $userModel = new UserModel();
-        $ret = $userModel->test();
-
-        var_dump($ret);
+        (new UserModel())->test();
     }
 
     /**

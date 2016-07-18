@@ -40,7 +40,7 @@ final class Application
     /**
      * @var array 钩子对象数组
      */
-    private $_hookInstanceArray = array();
+    private $_hookInstanceArray = [];
 
     /**
      * 获取当前类对象
@@ -152,7 +152,7 @@ final class Application
      * 使用：
      *      library\Application::getInstance()->bootstrap()->run()
      *
-     * @return object
+     * @return Application
      * @throws \Exception
      */
     public function bootstrap()
@@ -246,7 +246,7 @@ final class Application
      *      $application->registerHook(new AHook())->registerHook(new BHook())
      *
      * @param HookInterface $hookInstance
-     * @return object
+     * @return Application
      */
     public function registerHook(HookInterface $hookInstance)
     {

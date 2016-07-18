@@ -75,12 +75,12 @@ interface DatabaseInterface
      * join('left', 'user', 'post.user_id', 'user.id') / join('inner', ['user' => 'u'], 'p.user_id', 'u.id')
      *
      * @param string $way
-     * @param string $table
+     * @param mixed $tableName
      * @param string $leftField
      * @param string $rightField
      * @return DatabaseInterface
      */
-    public function join($way, $table, $leftField, $rightField);
+    public function join($way, $tableName, $leftField, $rightField);
 
     /**
      * 连贯操作：WHERE
@@ -117,10 +117,9 @@ interface DatabaseInterface
      *
      * 请不要实现一些诡异的写法，比如：order('id', 'score', 'desc') / order('id', 'asc', ['score', 'desc'])，本身从理解上也存在误导
      *
-     * @param array $param
      * @return DatabaseInterface
      */
-    public function order($param);
+    public function order();
 
     // public function group();
 

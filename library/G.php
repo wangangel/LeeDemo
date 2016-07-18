@@ -33,7 +33,7 @@ final class G
     /**
      * @var array 存放的数据
      */
-    private static $_data = array();
+    private static $_data = [];
 
     /**
      * 存放

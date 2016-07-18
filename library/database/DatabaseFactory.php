@@ -15,7 +15,7 @@ final class DatabaseFactory
     /**
      * @var array 数据库驱动句柄数组（因为可能存在临时切换驱动的情况，比如从 mysql 切换到 mango）
      */
-    private static $_driverInstanceArray = array();
+    private static $_driverInstanceArray = [];
 
     /**
      * 获取数据库驱动
