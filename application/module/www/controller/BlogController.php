@@ -6,12 +6,6 @@
  * Date: 2016/7/16 13:52
  */
 
-namespace application\module\www\controller;
-
-use library\ControllerAbstract;
-use library\Application;
-use application\model\UserModel;
-
 class BlogController extends ControllerAbstract
 {
     /**
@@ -27,7 +21,7 @@ class BlogController extends ControllerAbstract
      */
     public function indexAction()
     {
-        (new UserModel())->test();
+        // M('user')->test();
     }
 
     /**

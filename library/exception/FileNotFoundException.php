@@ -13,7 +13,7 @@ class FileNotFoundException extends ExceptionAbstract
     /**
      * @var string 错误的文件路径
      */
-    protected $_filePath = '';
+    protected $_filePath = null;
 
     /**
      * 构造器

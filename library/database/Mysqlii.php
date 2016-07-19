@@ -1,12 +1,12 @@
 <?php
 /**
- * Mysqli.php
+ * Mysqlii.php
  *
  * User: 670554666@qq.com
  * Date: 2016/7/18 9:24
  */
 
-final class Mysqli implements DatabaseInterface
+final class Mysqlii implements DatabaseInterface
 {
     /**
      * @var array 连接句柄数组
@@ -27,7 +27,7 @@ final class Mysqli implements DatabaseInterface
      */
     public function getConnect($isMaster)
     {
-        $config = Application::getInstance()->getConfig('db');
+        $config = C('db');
 
         if ($isMaster) {
             $config = $config['master'];

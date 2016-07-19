@@ -6,10 +6,6 @@
  * Date: 2016/7/6 10:56
  */
 
-namespace application\module\www;
-
-use library\Application;
-
 class Bootstrap
 {
     /**

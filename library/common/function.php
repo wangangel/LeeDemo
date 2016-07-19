@@ -17,7 +17,7 @@
  * @param string $key
  * @return mixed
  * @throws FileNotFoundException
- * @throws SystemException
+ * @throws UndefinedException
  */
 function C($key)
 {
@@ -61,8 +61,13 @@ function C($key)
     }
 
     if (is_null($ret)) {
-        throw new SystemException('配置不存在: ' . $key);
+        throw new UndefinedException('config', $key, '配置不存在');
     }
 
     return $ret;
+}
+
+function M($modelName)
+{
+    // todo
 }

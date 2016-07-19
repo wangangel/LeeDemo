@@ -9,6 +9,26 @@
 final class Application
 {
     /**
+     * 默认的控制器名称
+     */
+    const DEFAULT_CONTROLLER_NAME = 'index';
+
+    /**
+     * 默认的动作名称
+     */
+    const DEFAULT_ACTION_NAME = 'index';
+
+    /**
+     * 控制器后缀
+     */
+    const CONTROLLER_SUFFIX = 'Controller';
+
+    /**
+     * 动作后缀
+     */
+    const ACTION_SUFFIX = 'Action';
+
+    /**
      * @var Application|null 当前对象
      */
     private static $_instance = null;
@@ -16,7 +36,7 @@ final class Application
     /**
      * @var bool 是否渲染视图
      */
-    private $_viewRender = true;
+    private $_isViewRender = true;
 
     /**
      * @var Request|null 请求对象
@@ -69,22 +89,22 @@ final class Application
      *      library\Application::getInstance()->bootstrap()->run()
      *
      * @return Application
-     * @throws \Exception
+     * @throws FileNotFoundException
+     * @throws UndefinedException
      */
     public function bootstrap()
     {
-        $bootstrapFile = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'Bootstrap.php';
+        $bootstrapFile = ROOT . '/application/module/' . MODULE . '/Bootstrap.php';
         if (!is_file($bootstrapFile)) {
-            throw new FileNotFoundException($bootstrapFile, '当前应用的 Bootstrap 文件未找到');
+            throw new FileNotFoundException($bootstrapFile, '当前应用的初始化文件丢失');
         }
         require $bootstrapFile;
 
-        $class = 'application\\module\\' . MODULE . '\\Bootstrap';
-        if (!class_exists($class, false)) {
-            throw new \Exception('当前应用的 Bootstrap 文件存在，但类未定义: ' . $bootstrapFile);
+        if (!class_exists('Bootstrap', false)) {
+            throw new UndefinedException('class', 'Bootstrap', '当前应用的初始化类未定义');
         }
 
-        $obj = new $class();
+        $obj = new Bootstrap();
         $methodArr = get_class_methods($obj);
         foreach ($methodArr as $method) {
             if (substr($method, 0, 5) === '_init') {
@@ -97,6 +117,9 @@ final class Application
 
     /**
      * 执行应用
+     *
+     * @throws FileNotFoundException
+     * @throws UndefinedException
      */
     public function run()
     {
@@ -110,19 +133,26 @@ final class Application
         // todo: beforeDispatch Hook
 
         // 执行分发
-        $class = 'application\\module\\' . MODULE . '\\controller\\' . ucfirst($this->_requestInstance->getControllerName()) . CONTROLLER_SUFFIX;
-        $action = $this->_requestInstance->getActionName() . ACTION_SUFFIX;
-        $controllerInstance = new $class();
-        if (!method_exists($controllerInstance, $action)) {
-            throw new \Exception('控制器 ' . $class . ' 下未定义动作: ' . $action);
+        $controller = ucfirst($this->_requestInstance->getControllerName()) . self::CONTROLLER_SUFFIX;
+        $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
+        if (!is_file($controllerFile)) {
+            throw new FileNotFoundException($controllerFile, '控制器文件丢失');
         }
+        require $controllerFile;
+
+        $action = $this->_requestInstance->getActionName() . self::ACTION_SUFFIX;
+        $controllerInstance = new $controller();
+        if (!method_exists($controllerInstance, $action)) {
+            throw new UndefinedException('function', $action, '控制器 ' . $controller . ' 下未定义动作');
+        }
+
         $ret = $controllerInstance->$action();
         unset($controllerInstance);
 
         // todo: beforeRender Hook
 
         // 是否渲染视图
-        if ($this->_viewRender) {
+        if ($this->_isViewRender) {
             $viewInstance = new View();
             $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
             unset($viewInstance);
@@ -140,7 +170,7 @@ final class Application
      */
     public function disableView()
     {
-        $this->_viewRender = false;
+        $this->_isViewRender = false;
     }
 
     /**

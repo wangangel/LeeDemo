@@ -1,8 +1,12 @@
 <?php
 final class Application
 {
+    const DEFAULT_CONTROLLER_NAME = 'index';
+    const DEFAULT_ACTION_NAME = 'index';
+    const CONTROLLER_SUFFIX = 'Controller';
+    const ACTION_SUFFIX = 'Action';
     private static $_instance = null;
-    private $_viewRender = true;
+    private $_isViewRender = true;
     private $_requestInstance = null;
     private $_responseInstance = null;
     private $_hookInstanceArray = [];
@@ -20,16 +24,15 @@ final class Application
     }
     public function bootstrap()
     {
-        $bootstrapFile = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'Bootstrap.php';
+        $bootstrapFile = ROOT . '/application/module/' . MODULE . '/Bootstrap.php';
         if (!is_file($bootstrapFile)) {
-            throw new FileNotFoundException($bootstrapFile, '当前应用的 Bootstrap 文件未找到');
+            throw new FileNotFoundException($bootstrapFile, '当前应用的初始化文件丢失');
         }
         require $bootstrapFile;
-        $class = 'application\\module\\' . MODULE . '\\Bootstrap';
-        if (!class_exists($class, false)) {
-            throw new \Exception('当前应用的 Bootstrap 文件存在，但类未定义: ' . $bootstrapFile);
+        if (!class_exists('Bootstrap', false)) {
+            throw new UndefinedException('class', 'Bootstrap', '当前应用的初始化类未定义');
         }
-        $obj = new $class();
+        $obj = new Bootstrap();
         $methodArr = get_class_methods($obj);
         foreach ($methodArr as $method) {
             if (substr($method, 0, 5) === '_init') {
@@ -47,17 +50,22 @@ final class Application
         unset($routerInstance);
         // todo: beforeDispatch Hook
         // 执行分发
-        $class = 'application\\module\\' . MODULE . '\\controller\\' . ucfirst($this->_requestInstance->getControllerName()) . CONTROLLER_SUFFIX;
-        $action = $this->_requestInstance->getActionName() . ACTION_SUFFIX;
-        $controllerInstance = new $class();
+        $controller = ucfirst($this->_requestInstance->getControllerName()) . self::CONTROLLER_SUFFIX;
+        $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
+        if (!is_file($controllerFile)) {
+            throw new FileNotFoundException($controllerFile, '控制器文件丢失');
+        }
+        require $controllerFile;
+        $action = $this->_requestInstance->getActionName() . self::ACTION_SUFFIX;
+        $controllerInstance = new $controller();
         if (!method_exists($controllerInstance, $action)) {
-            throw new \Exception('控制器 ' . $class . ' 下未定义动作: ' . $action);
+            throw new UndefinedException('function', $action, '控制器 ' . $controller . ' 下未定义动作');
         }
         $ret = $controllerInstance->$action();
         unset($controllerInstance);
         // todo: beforeRender Hook
         // 是否渲染视图
-        if ($this->_viewRender) {
+        if ($this->_isViewRender) {
             $viewInstance = new View();
             $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
             unset($viewInstance);
@@ -69,7 +77,7 @@ final class Application
     }
     public function disableView()
     {
-        $this->_viewRender = false;
+        $this->_isViewRender = false;
     }
     public function getRequestInstance()
     {
@@ -212,8 +220,8 @@ final class Router
     public function route()
     {
         $requestInstance = Application::getInstance()->getRequestInstance();
-        $controllerName = $requestInstance->getGlobalQuery('c', DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
-        $actionName = $requestInstance->getGlobalQuery('a', DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
+        $controllerName = $requestInstance->getGlobalQuery('c', Application::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
+        $actionName = $requestInstance->getGlobalQuery('a', Application::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
         $requestInstance->setControllerName($controllerName)->setActionName($actionName);
     }
 }
@@ -239,13 +247,13 @@ final class View
     public function __construct()
     {
         // 暂时默认视图到这里（目前不提供 setViewPath()，也不支持第三方如 smarty / volt 等模版引擎，将来可扩展）
-        $this->_viewPath = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'view' . SP . Application::getInstance()->getRequestInstance()->getControllerName();
+        $this->_viewPath = ROOT . '/application/module/' . MODULE . '/view/' . Application::getInstance()->getRequestInstance()->getControllerName();
     }
     public function render($viewFileName, $data)
     {
         extract($data);
         ob_start();
-        $viewFile = $this->_viewPath . SP . $viewFileName;
+        $viewFile = $this->_viewPath . '/' . $viewFileName;
         if (!is_file($viewFile)) {
             throw new FileNotFoundException($viewFile, '视图文件丢失');
         }
@@ -275,13 +283,13 @@ interface DatabaseInterface
     public function rollback();
     public function commit();
 }
-final class Mysqli implements DatabaseInterface
+final class Mysqlii implements DatabaseInterface
 {
     private $_connectArray = [];
     private $_data = [];
     public function getConnect($isMaster)
     {
-        $config = Application::getInstance()->getConfig('db');
+        $config = C('db');
         if ($isMaster) {
             $config = $config['master'];
         } else {
@@ -556,9 +564,28 @@ class DatabaseException extends ExceptionAbstract
         parent::__construct($message, $code);
     }
 }
+class UndefinedException extends ExceptionAbstract
+{
+    private $_type = null;
+    private $_name = null;
+    public function __construct($type, $name, $message, $code = 0)
+    {
+        $this->_type = $type;
+        $this->_name = $name;
+        parent::__construct($message, $code);
+    }
+    public function getType()
+    {
+        return $this->_type;
+    }
+    public function getName()
+    {
+        return $this->_name;
+    }
+}
 class FileNotFoundException extends ExceptionAbstract
 {
-    protected $_filePath = '';
+    protected $_filePath = null;
     public function __construct($filePath, $message, $code = 0)
     {
         $this->_filePath = $filePath;

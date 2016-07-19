@@ -15,8 +15,8 @@ final class Router
     {
         $requestInstance = Application::getInstance()->getRequestInstance();
 
-        $controllerName = $requestInstance->getGlobalQuery('c', DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
-        $actionName = $requestInstance->getGlobalQuery('a', DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
+        $controllerName = $requestInstance->getGlobalQuery('c', Application::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
+        $actionName = $requestInstance->getGlobalQuery('a', Application::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
 
         $requestInstance->setControllerName($controllerName)->setActionName($actionName);
     }
