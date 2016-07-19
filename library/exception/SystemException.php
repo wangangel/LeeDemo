@@ -1,12 +1,12 @@
 <?php
 /**
- * DatabaseException.php
+ * SystemException.php
  *
  * User: 670554666@qq.com
- * Date: 2016/7/18 9:24
+ * Date: 2016/7/19 16:05
  */
 
-class DatabaseException extends ExceptionAbstract
+class SystemException extends ExceptionAbstract
 {
     /**
      * 构造器

@@ -8,8 +8,6 @@
  * Date: 2016/7/6 15:13
  */
 
-namespace library\exception;
-
 class FileNotFoundException extends ExceptionAbstract
 {
     /**

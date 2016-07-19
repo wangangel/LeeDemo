@@ -6,8 +6,6 @@
  * Date: 2016/7/8 16:28
  */
 
-namespace library;
-
 final class Router
 {
     /**
@@ -17,8 +15,8 @@ final class Router
     {
         $requestInstance = Application::getInstance()->getRequestInstance();
 
-        $controllerName = $requestInstance->getGlobalQuery('c', G::DEFAULT_CONTROLLER, '/^[a-z]+$/');
-        $actionName = $requestInstance->getGlobalQuery('a', G::DEFAULT_ACTION, '/^[a-zA-Z]+$/');
+        $controllerName = $requestInstance->getGlobalQuery('c', DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
+        $actionName = $requestInstance->getGlobalQuery('a', DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
 
         $requestInstance->setControllerName($controllerName)->setActionName($actionName);
     }

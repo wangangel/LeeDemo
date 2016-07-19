@@ -11,17 +11,7 @@
             <?php include dirname(__DIR__) . SP . '__header.php' ; ?>
             <div class="main">
                 <div class="primary">
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
-                    sdsadads<br>
+                    <?php echo microtime(true) - START_TIME; ?>
                 </div>
                 <div class="sidebar">
                     asdsad

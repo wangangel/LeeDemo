@@ -17,4 +17,4 @@ define('MODULE', 'www');        // 当前位于 /application/module 下的应用
 /**
  * 加载启动文件
  */
-require dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'library' . DIRECTORY_SEPARATOR . '__start.php';
+require dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'library' . DIRECTORY_SEPARATOR . '~start.php';

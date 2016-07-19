@@ -6,8 +6,6 @@
  * Date: 2016/7/16 9:22
  */
 
-namespace library;
-
 final class Session
 {
     /**

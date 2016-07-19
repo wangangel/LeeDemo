@@ -6,21 +6,12 @@
  * Date: 2016/7/5 18:34
  */
 
-namespace library;
-
-use library\exception\FileNotFoundException;
-
 final class Application
 {
     /**
      * @var Application|null 当前对象
      */
     private static $_instance = null;
-
-    /**
-     * @var array|null 配置数组
-     */
-    private $_config = null;
 
     /**
      * @var bool 是否渲染视图
@@ -61,83 +52,8 @@ final class Application
      */
     public function __construct()
     {
-        $this->_loadConfig();
         $this->_requestInstance = new Request();
         $this->_responseInstance = new Response();
-    }
-
-    /**
-     * 加载配置
-     *
-     * 在 /application/config/ 下必须包含系统配置文件
-     * 你也可以在 /application/module/[MODULE]/config/ 下定义应用配置文件，相同配置应用的优先级更高
-     *
-     * @throws FileNotFoundException
-     */
-    private function _loadConfig()
-    {
-        // 系统配置
-        $systemConfigFile = ROOT . SP . 'application' . SP . 'config' . SP . ENV . '.php';
-        if (!is_file($systemConfigFile)) {
-            throw new FileNotFoundException($systemConfigFile, '系统配置文件丢失');
-        }
-        $config = include $systemConfigFile;
-
-        // 应用配置
-        $moduleConfigFile = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'config' . SP . ENV . '.php';
-        if (is_file($moduleConfigFile)) {
-            $applicationConfig = include $moduleConfigFile;
-            $config = array_merge($config, $applicationConfig);
-        }
-
-        $this->_config = $config;
-    }
-
-    /**
-     * 获取配置
-     *
-     * 使用：getConfig('system') / getConfig('db.master.host')，最多支持到三层
-     *
-     * @param string $name
-     * @return mixed
-     * @throws \Exception
-     */
-    public function getConfig($name)
-    {
-        if (!is_string($name)) {
-            throw new \Exception('参数仅接受字符串: Application->getConfig()');
-        }
-
-        $ret = null;
-        if (strpos($name, '.') > 0) {
-            $array = explode('.', $name);
-            switch (count($array)) {
-                case 2:
-                    $ret = isset($this->_config[$array[0]][$array[1]]) ? $this->_config[$array[0]][$array[1]] : null;
-                    break;
-                case 3:
-                    $ret = isset($this->_config[$array[0]][$array[1]][$array[2]]) ? $this->_config[$array[0]][$array[1]][$array[2]] : null;
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            $ret = isset($this->_config[$name]) ? $this->_config[$name] : null;
-        }
-
-        if (is_null($ret)) {
-            throw new \Exception('配置不存在: ' . $name);
-        }
-
-        return $ret;
-    }
-
-    /**
-     * 关闭视图渲染
-     */
-    public function disableView()
-    {
-        $this->_viewRender = false;
     }
 
     /**
@@ -194,8 +110,8 @@ final class Application
         // todo: beforeDispatch Hook
 
         // 执行分发
-        $class = 'application\\module\\' . MODULE . '\\controller\\' . ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
-        $action = $this->_requestInstance->getActionName() . G::ACTION_SUFFIX;
+        $class = 'application\\module\\' . MODULE . '\\controller\\' . ucfirst($this->_requestInstance->getControllerName()) . CONTROLLER_SUFFIX;
+        $action = $this->_requestInstance->getActionName() . ACTION_SUFFIX;
         $controllerInstance = new $class();
         if (!method_exists($controllerInstance, $action)) {
             throw new \Exception('控制器 ' . $class . ' 下未定义动作: ' . $action);
@@ -217,6 +133,14 @@ final class Application
 
         // 执行响应
         $this->_responseInstance->response();
+    }
+
+    /**
+     * 关闭视图渲染
+     */
+    public function disableView()
+    {
+        $this->_viewRender = false;
     }
 
     /**
@@ -248,20 +172,10 @@ final class Application
      * @param HookInterface $hookInstance
      * @return Application
      */
-    public function registerHook(HookInterface $hookInstance)
+    public function registerHook($hookInstance)
     {
         $this->_hookInstanceArray[] = $hookInstance;
 
         return $this;
-    }
-
-    /**
-     * 获取钩子对象数组
-     *
-     * @return array
-     */
-    public function getHookInstanceArray()
-    {
-        return $this->_hookInstanceArray;
     }
 }

@@ -6,8 +6,6 @@
  * Date: 2016/7/16 21:48
  */
 
-namespace library\database;
-
 interface DatabaseInterface
 {
     /**

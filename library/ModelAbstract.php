@@ -6,14 +6,10 @@
  * Date: 2016/7/6 11:09
  */
 
-namespace library;
-
-use library\database\DatabaseFactory;
-
 abstract class ModelAbstract
 {
     /**
-     * @var database\DatabaseInterface|null 当前数据库连接
+     * @var DatabaseInterface|null 当前数据库连接
      */
     protected $_db = null;
 

@@ -6,10 +6,6 @@
  * Date: 2016/7/18 10:33
  */
 
-namespace library\database;
-
-use library\Application;
-
 final class DatabaseFactory
 {
     /**
@@ -25,9 +21,7 @@ final class DatabaseFactory
      */
     public static function getDriverInstance($driverName = null)
     {
-        if ($driverName === null) {
-            $driverName = Application::getInstance()->getConfig('db.driver');
-        }
+        $driverName = $driverName === null ? C('db.driver') : $driverName;
 
         if (!isset(self::$_driverInstanceArray[$driverName])) {
             $class = 'library\\database\\' . $driverName;

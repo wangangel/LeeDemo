@@ -6,10 +6,6 @@
  * Date: 2016/7/12 21:06
  */
 
-namespace library;
-
-use library\exception\FileNotFoundException;
-
 final class View
 {
     /**

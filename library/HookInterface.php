@@ -6,8 +6,6 @@
  * Date: 2016/7/9 14:45
  */
 
-namespace library;
-
 interface HookInterface
 {
     /**

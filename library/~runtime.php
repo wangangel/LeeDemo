@@ -1,43 +1,294 @@
 <?php
-/**
- * Mysqli.php
- *
- * User: 670554666@qq.com
- * Date: 2016/7/18 9:24
- */
-
+final class Application
+{
+    private static $_instance = null;
+    private $_viewRender = true;
+    private $_requestInstance = null;
+    private $_responseInstance = null;
+    private $_hookInstanceArray = [];
+    public static function getInstance()
+    {
+        if (self::$_instance === null) {
+            self::$_instance = new self();
+        }
+        return self::$_instance;
+    }
+    public function __construct()
+    {
+        $this->_requestInstance = new Request();
+        $this->_responseInstance = new Response();
+    }
+    public function bootstrap()
+    {
+        $bootstrapFile = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'Bootstrap.php';
+        if (!is_file($bootstrapFile)) {
+            throw new FileNotFoundException($bootstrapFile, '当前应用的 Bootstrap 文件未找到');
+        }
+        require $bootstrapFile;
+        $class = 'application\\module\\' . MODULE . '\\Bootstrap';
+        if (!class_exists($class, false)) {
+            throw new \Exception('当前应用的 Bootstrap 文件存在，但类未定义: ' . $bootstrapFile);
+        }
+        $obj = new $class();
+        $methodArr = get_class_methods($obj);
+        foreach ($methodArr as $method) {
+            if (substr($method, 0, 5) === '_init') {
+                $obj->$method();
+            }
+        }
+        return $this;
+    }
+    public function run()
+    {
+        // todo: beforeRoute Hook
+        // 执行路由
+        $routerInstance = new Router();
+        $routerInstance->route();
+        unset($routerInstance);
+        // todo: beforeDispatch Hook
+        // 执行分发
+        $class = 'application\\module\\' . MODULE . '\\controller\\' . ucfirst($this->_requestInstance->getControllerName()) . CONTROLLER_SUFFIX;
+        $action = $this->_requestInstance->getActionName() . ACTION_SUFFIX;
+        $controllerInstance = new $class();
+        if (!method_exists($controllerInstance, $action)) {
+            throw new \Exception('控制器 ' . $class . ' 下未定义动作: ' . $action);
+        }
+        $ret = $controllerInstance->$action();
+        unset($controllerInstance);
+        // todo: beforeRender Hook
+        // 是否渲染视图
+        if ($this->_viewRender) {
+            $viewInstance = new View();
+            $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
+            unset($viewInstance);
+        }
+        $this->_responseInstance->setBody($ret);
+        // todo: beforeResponse Hook
+        // 执行响应
+        $this->_responseInstance->response();
+    }
+    public function disableView()
+    {
+        $this->_viewRender = false;
+    }
+    public function getRequestInstance()
+    {
+        return $this->_requestInstance;
+    }
+    public function getResponseInstance()
+    {
+        return $this->_responseInstance;
+    }
+    public function registerHook($hookInstance)
+    {
+        $this->_hookInstanceArray[] = $hookInstance;
+        return $this;
+    }
+}
+abstract class ControllerAbstract
+{
+}
+interface HookInterface
+{
+    public function beforeRoute();
+    public function beforeDispatch();
+    public function beforeRender();
+    public function beforeResponse();
+}
+abstract class ModelAbstract
+{
+    protected $_db = null;
+    public function __construct()
+    {
+        $this->_db = DatabaseFactory::getDriverInstance();
+    }
+}
+final class Request
+{
+    private $_method = null;
+    private $_controllerName = null;
+    private $_actionName = null;
+    public function getGlobalQuery($key = null, $default = null, $filter = null)
+    {
+        if ($key === null) {
+            return $_GET;
+        }
+        $ret = null;
+        if(isset($_GET[$key])){
+            $ret = $_GET[$key];
+            if ($filter !== null) {
+                if (substr($filter, 0, 1) === '/') {
+                    if (!preg_match($filter, $ret)) {
+                        $ret = $default;
+                    }
+                } else {
+                    $ret = $filter($ret);
+                }
+            }
+        } else {
+            $ret = $default;
+        }
+        return $ret;
+    }
+    public function getGlobalPost($key = null, $default = null)
+    {
+        if ($key === null) {
+            return $_POST;
+        }
+        return isset($_POST[$key]) ? $_POST[$key] : $default;
+    }
+    public function getGlobalRequest($key = null, $default = null)
+    {
+        if ($key === null) {
+            return $_REQUEST;
+        }
+        return isset($_REQUEST[$key]) ? $_REQUEST[$key] : $default;
+    }
+    public function getGlobalServer($key = null, $default = null)
+    {
+        if ($key === null) {
+            return $_SERVER;
+        }
+        return isset($_SERVER[$key]) ? $_SERVER[$key] : $default;
+    }
+    public function getMethod()
+    {
+        if ($this->_method === null) {
+            $method = $this->getGlobalServer('REQUEST_METHOD');
+            if ($method) {
+                $this->_method = strtoupper($method);
+            } else {
+                $sapi = php_sapi_name();
+                if (strtolower($sapi) === 'cli' || strtolower(substr($sapi, 0, 3)) === 'cgi') {
+                    $this->_method = 'CLI';
+                } else {
+                    $this->_method = 'UNKNOWN';
+                }
+            }
+        }
+        return $this->_method;
+    }
+    public function isCli()
+    {
+        return $this->getMethod() === 'CLI';
+    }
+    public function setControllerName($controllerName)
+    {
+        $this->_controllerName = $controllerName;
+        return $this;
+    }
+    public function setActionName($actionName)
+    {
+        $this->_actionName = $actionName;
+        return $this;
+    }
+    public function getControllerName()
+    {
+        return $this->_controllerName;
+    }
+    public function getActionName()
+    {
+        return $this->_actionName;
+    }
+}
+final class Response
+{
+    private $_body = null;
+    public function setBody($content)
+    {
+        $this->_body = $content;
+    }
+    public function getBody()
+    {
+        return $this->_body;
+    }
+    public function response()
+    {
+        echo $this->getBody();
+    }
+}
+final class Router
+{
+    public function route()
+    {
+        $requestInstance = Application::getInstance()->getRequestInstance();
+        $controllerName = $requestInstance->getGlobalQuery('c', DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
+        $actionName = $requestInstance->getGlobalQuery('a', DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
+        $requestInstance->setControllerName($controllerName)->setActionName($actionName);
+    }
+}
+final class Session
+{
+    private static $_instance = null;
+    public function __construct()
+    {
+        session_start();
+        ini_set('session.save_handler', SESSION_SAVE_HANDLER);
+    }
+    public static function getInstance()
+    {
+        if (self::$_instance === null) {
+            self::$_instance = new self();
+        }
+        return self::$_instance;
+    }
+}
+final class View
+{
+    private $_viewPath = null;
+    public function __construct()
+    {
+        // 暂时默认视图到这里（目前不提供 setViewPath()，也不支持第三方如 smarty / volt 等模版引擎，将来可扩展）
+        $this->_viewPath = ROOT . SP . 'application' . SP . 'module' . SP . MODULE . SP . 'view' . SP . Application::getInstance()->getRequestInstance()->getControllerName();
+    }
+    public function render($viewFileName, $data)
+    {
+        extract($data);
+        ob_start();
+        $viewFile = $this->_viewPath . SP . $viewFileName;
+        if (!is_file($viewFile)) {
+            throw new FileNotFoundException($viewFile, '视图文件丢失');
+        }
+        include($viewFile);
+        $ret = ob_get_clean();
+        return $ret;
+    }
+}
+interface DatabaseInterface
+{
+    public function getConnect($isMaster);
+    public function query($sql);
+    public function execute($sql);
+    public function field();
+    public function table($tableName);
+    public function join($way, $tableName, $leftField, $rightField);
+    public function where();
+    public function order();
+    // public function group();
+    // public function having();
+    public function limit();
+    public function select();
+    public function insert($data);
+    public function update($data);
+    public function delete();
+    public function startTrans();
+    public function rollback();
+    public function commit();
+}
 final class Mysqli implements DatabaseInterface
 {
-    /**
-     * @var array 连接句柄数组
-     */
     private $_connectArray = [];
-
-    /**
-     * @var array 用来拼凑 sql 的数据
-     */
     private $_data = [];
-
-    /**
-     * 获取数据库连接
-     *
-     * @param bool $isMaster
-     * @return resource
-     * @throws DatabaseException
-     */
     public function getConnect($isMaster)
     {
         $config = Application::getInstance()->getConfig('db');
-
         if ($isMaster) {
             $config = $config['master'];
         } else {
             $config = $config['slave'][mt_rand(0, 1)];
         }
-
         // 一种配置对应一个连接
         $key = md5(implode('', $config));
-
         if (!isset($this->_connectArray[$key])) {
             $connect = new \Mysqli($config['host'], $config['username'], $config['password'], $config['dbname']);
             $connect->query('SET NAMES ' . $config['charset']);
@@ -46,17 +297,8 @@ final class Mysqli implements DatabaseInterface
             }
             $this->_connectArray[$key] = $connect;
         }
-
         return $this->_connectArray[$key];
     }
-
-    /**
-     * 查询
-     *
-     * @param string $sql
-     * @return array
-     * @throws DatabaseException
-     */
     public function query($sql)
     {
         $query = $this->getConnect(false)->query($sql);
@@ -64,31 +306,20 @@ final class Mysqli implements DatabaseInterface
             // todo: log
             throw new DatabaseException('mysqli query: ' . $sql);
         }
-
         $result = [];
         if ($query->num_rows > 0) {
             for ($i = 0; $i < $query->num_rows; $i++) {
                 $result[$i] = $query->fetch_assoc();
             }
         }
-
         return $result;
     }
-
     public function execute($sql)
     {}
-
-    /**
-     * 连贯操作：字段
-     *
-     * @return Mysqli
-     * @throws DatabaseException
-     */
     public function field()
     {
         $args = func_get_args();
         $num = func_num_args();
-
         $field = null;
         if ($num === 0) {
             $field = '*';
@@ -111,23 +342,13 @@ final class Mysqli implements DatabaseInterface
             $field = implode(', ', $array);
         }
         $this->_data['field'] = $field;
-
         return $this;
     }
-
-    /**
-     * 连贯操作：表名
-     *
-     * @param mixed $tableName
-     * @return Mysqli
-     * @throws DatabaseException
-     */
     public function table($tableName)
     {
         if (empty($tableName)) {
             throw new DatabaseException('mysqli table: 缺少参数 -> $tableName');
         }
-
         $table = null;
         if (is_string($tableName)) {
             $table = $tableName;
@@ -137,27 +358,14 @@ final class Mysqli implements DatabaseInterface
             throw new DatabaseException('mysqli table: 无效的参数 -> $tableName');
         }
         $this->_data['table'] = $table;
-
         return $this;
     }
-
-    /**
-     * 连贯操作：JOIN
-     *
-     * @param string $way
-     * @param mixed $tableName
-     * @param string $leftField
-     * @param string $rightField
-     * @return Mysqli
-     * @throws DatabaseException
-     */
     public function join($way, $tableName, $leftField, $rightField)
     {
         $allowWays = ['inner', 'left', 'left outer', 'right', 'right outer', 'full', 'full outer'];
         if (!in_array(strtolower($way), $allowWays)) {
             throw new DatabaseException('mysqli join: 无效的参数 -> $way');
         }
-
         $table = null;
         if (empty($tableName)) {
             throw new DatabaseException('mysqli join: 缺少参数 -> $tableName');
@@ -170,7 +378,6 @@ final class Mysqli implements DatabaseInterface
                 throw new DatabaseException('mysqli join: 无效的参数 -> $tableName');
             }
         }
-
         if (empty($leftField)) {
             throw new DatabaseException('mysqli join: 缺少参数 -> $leftField');
         } else {
@@ -178,7 +385,6 @@ final class Mysqli implements DatabaseInterface
                 throw new DatabaseException('mysqli join: 无效的参数 -> $leftField');
             }
         }
-
         if (empty($rightField)) {
             throw new DatabaseException('mysqli join: 缺少参数 -> $rightField');
         } else {
@@ -186,28 +392,18 @@ final class Mysqli implements DatabaseInterface
                 throw new DatabaseException('mysqli join: 无效的参数 -> $rightField');
             }
         }
-
         $join = ' ' . strtoupper($way) . ' JOIN ' . $table . ' ON ' . $leftField . ' = ' . $rightField;
         if (isset($this->_data['join'])) {
             $this->_data['join'] .= $join;
         } else {
             $this->_data['join'] = $join;
         }
-
         return $this;
     }
-
-    /**
-     * 连贯操作：WHERE
-     *
-     * @return Mysqli
-     * @throws DatabaseException
-     */
     public function where()
     {
         $args = func_get_args();
         $num = func_num_args();
-
         $where = null;
         if ($num > 0) {
             if ($num === 1) {
@@ -234,25 +430,13 @@ final class Mysqli implements DatabaseInterface
             throw new DatabaseException('mysqli where: 缺少参数');
         }
         $this->_data['where'] = ' WHERE ' . $where;
-
         return $this;
     }
-
-    /**
-     * 辅助解析 WHERE
-     *
-     * @param string $field
-     * @param string $condition
-     * @param mixed $value
-     * @return string
-     * @throws DatabaseException
-     */
     private function _parseWhere($field, $condition, $value)
     {
         if (!is_string($field) || !is_string($condition)) {
             throw new DatabaseException('mysqli where: 无效的参数');
         }
-
         $matches = ['eq', 'neq', 'lk', 'nlk', 'bt', 'nbt', 'in', 'nin'];
         if (!in_array($condition, $matches)) {
             throw new DatabaseException('mysqli where: 无效的参数');
@@ -262,27 +446,17 @@ final class Mysqli implements DatabaseInterface
             ['=', '<>', 'LIKE', 'NOT LIKE', 'BETWEEN', 'NOT BETWEEN', 'IN', 'NOT IN'],
             $condition
         );
-
         if (is_array($value)) {
             $value = '(' . implode(',', $value) . ')';
         } elseif (is_string($value)) {
             $value = '"' . $value . '"';
         }
-
         return $field . ' ' . $condition . ' ' . $value;
     }
-
-    /**
-     * 连贯操作：ORDER BY
-     *
-     * @return Mysqli
-     * @throws DatabaseException
-     */
     public function order()
     {
         $args = func_get_args();
         $num = func_num_args();
-
         $order = null;
         if ($num > 0) {
             if ($num === 1) {
@@ -313,21 +487,12 @@ final class Mysqli implements DatabaseInterface
             throw new DatabaseException('mysqli order: 缺少参数');
         }
         $this->_data['order'] = ' ORDER BY ' . $order;
-
         return $this;
     }
-
-    /**
-     * 连贯操作：LIMIT
-     *
-     * @return Mysqli
-     * @throws DatabaseException
-     */
     public function limit()
     {
         $args = func_get_args();
         $num = func_num_args();
-
         $limit = null;
         if ($num > 0) {
             if ($num === 1) {
@@ -341,16 +506,8 @@ final class Mysqli implements DatabaseInterface
             throw new DatabaseException('mysqli limit: 缺少参数');
         }
         $this->_data['limit'] = ' LIMIT ' . $limit;
-
         return $this;
     }
-
-    /**
-     * SELECT
-     *
-     * @return array
-     * @throws DatabaseException
-     */
     public function select()
     {
         $field = isset($this->_data['field']) ? $this->_data['field'] : '*';
@@ -361,28 +518,61 @@ final class Mysqli implements DatabaseInterface
         $where = isset($this->_data['where']) ? $this->_data['where'] : '';
         $order = isset($this->_data['order']) ? $this->_data['order'] : '';
         $limit = isset($this->_data['limit']) ? $this->_data['limit'] : '';
-
         // mysqli 下的 SELECT 标准（未实现一些比如：UNION / GROUP BY / HAVING 等）
         $sql = 'SELECT ' . $field . ' FROM ' . $this->_data['table'] . $join . $where . $order . $limit;
-
         return $this->query($sql);
     }
-
     public function insert($data)
     {}
-
     public function update($data)
     {}
-
     public function delete()
     {}
-
     public function startTrans()
     {}
-
     public function rollback()
     {}
-
     public function commit()
     {}
+}
+final class DatabaseFactory
+{
+    private static $_driverInstanceArray = [];
+    public static function getDriverInstance($driverName = null)
+    {
+        $driverName = $driverName === null ? C('db.driver') : $driverName;
+        if (!isset(self::$_driverInstanceArray[$driverName])) {
+            $class = 'library\\database\\' . $driverName;
+            self::$_driverInstanceArray[$driverName] = new $class();
+        }
+        return self::$_driverInstanceArray[$driverName];
+    }
+}
+class ExceptionAbstract extends \Exception {}
+class DatabaseException extends ExceptionAbstract
+{
+    public function __construct($message, $code = 0)
+    {
+        parent::__construct($message, $code);
+    }
+}
+class FileNotFoundException extends ExceptionAbstract
+{
+    protected $_filePath = '';
+    public function __construct($filePath, $message, $code = 0)
+    {
+        $this->_filePath = $filePath;
+        parent::__construct($message, $code);
+    }
+    public function getFilePath()
+    {
+        return $this->_filePath;
+    }
+}
+class SystemException extends ExceptionAbstract
+{
+    public function __construct($message, $code = 0)
+    {
+        parent::__construct($message, $code);
+    }
 }
