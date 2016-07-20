@@ -6,12 +6,6 @@
  * Date: 2016/7/10 14:12
  */
 
-namespace application\module\www\controller;
-
-use library\Application;
-use library\ControllerAbstract;
-use library\Session;
-
 class IndexController extends ControllerAbstract
 {
     /**

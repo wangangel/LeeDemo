@@ -41,6 +41,10 @@ class BlogController extends ControllerAbstract
      */
     public function postAction()
     {
+        $postId = 1;
 
+        $post = M('post')->getPostById($postId);
+
+        var_dump($post);
     }
 }

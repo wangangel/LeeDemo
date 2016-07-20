@@ -23,11 +23,9 @@ final class Router
      */
     public function route()
     {
-        $requestInstance = Application::getInstance()->getRequestInstance();
+        $controllerName = I('get', 'c', self::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
+        $actionName = I('get', 'a', self::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
 
-        $controllerName = $requestInstance->getGlobalQuery('c', self::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
-        $actionName = $requestInstance->getGlobalQuery('a', self::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
-
-        $requestInstance->setControllerName($controllerName)->setActionName($actionName);
+        Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
     }
 }

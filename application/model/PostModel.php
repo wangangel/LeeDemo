@@ -8,6 +8,11 @@
 
 class PostModel extends ModelAbstract
 {
+    public function getPostById($postId)
+    {
+        return $this->_db->table('post')->where('id', 'eq', $postId)->limit(1)->select();
+    }
+
     public function getPagedList()
     {
         $list = $this->_db->table('post')->order('id', 'desc')->limit(0, 10)->select();

@@ -184,14 +184,18 @@ final class Request
     private $_method = null;
     private $_controllerName = null;
     private $_actionName = null;
-    public function getGlobalQuery($key = null, $default = null, $filter = null)
+    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
     {
+        if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
+            return null;
+        }
+        $data = $GLOBALS['_' . strtoupper($source)];
         if ($key === null) {
-            return $_GET;
+            return $data;
         }
         $ret = null;
-        if(isset($_GET[$key])){
-            $ret = $_GET[$key];
+        if(isset($data[$key])){
+            $ret = $data[$key];
             if ($filter !== null) {
                 if (substr($filter, 0, 1) === '/') {
                     if (!preg_match($filter, $ret)) {
@@ -205,27 +209,6 @@ final class Request
             $ret = $default;
         }
         return $ret;
-    }
-    public function getGlobalPost($key = null, $default = null)
-    {
-        if ($key === null) {
-            return $_POST;
-        }
-        return isset($_POST[$key]) ? $_POST[$key] : $default;
-    }
-    public function getGlobalRequest($key = null, $default = null)
-    {
-        if ($key === null) {
-            return $_REQUEST;
-        }
-        return isset($_REQUEST[$key]) ? $_REQUEST[$key] : $default;
-    }
-    public function getGlobalServer($key = null, $default = null)
-    {
-        if ($key === null) {
-            return $_SERVER;
-        }
-        return isset($_SERVER[$key]) ? $_SERVER[$key] : $default;
     }
     public function getMethod()
     {
@@ -289,10 +272,9 @@ final class Router
     const DEFAULT_ACTION_NAME = 'index';
     public function route()
     {
-        $requestInstance = Application::getInstance()->getRequestInstance();
-        $controllerName = $requestInstance->getGlobalQuery('c', self::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
-        $actionName = $requestInstance->getGlobalQuery('a', self::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
-        $requestInstance->setControllerName($controllerName)->setActionName($actionName);
+        $controllerName = I('get', 'c', self::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
+        $actionName = I('get', 'a', self::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
+        Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
     }
 }
 final class Session

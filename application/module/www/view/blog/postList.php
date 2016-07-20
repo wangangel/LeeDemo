@@ -11,10 +11,30 @@
             <?php include dirname(__DIR__) . '/header.php' ; ?>
             <div class="main">
                 <div class="primary">
-                    <?php var_dump($data); ?>
+                    <div class="post-list">
+                        <ul>
+                            <?php foreach($data['list'] as $post): ?>
+                                <li>
+                                    <div class="pl-title">
+                                        <strong><a href="/?c=blog&a=post&postId=<?php echo $post['id']; ?>"><?php echo $post['title']; ?></a></strong>
+                                    </div>
+                                    <div class="pl-description">
+                                        <p><?php echo $post['description']; ?></p>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
                 </div>
                 <div class="sidebar">
-                    asdsad
+                    <div class="box">
+                        <div class="bx-title">
+                            <h3>日志分类</h3>
+                        </div>
+                        <div class="bx-body">
+                            asd
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
