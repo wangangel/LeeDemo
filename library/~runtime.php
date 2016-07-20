@@ -1,14 +1,12 @@
 <?php
 final class Application
 {
-    const DEFAULT_CONTROLLER_NAME = 'index';
-    const DEFAULT_ACTION_NAME = 'index';
-    const CONTROLLER_SUFFIX = 'Controller';
-    const ACTION_SUFFIX = 'Action';
     private static $_instance = null;
     private $_isViewRender = true;
+    private $_configInstance = null;
     private $_requestInstance = null;
     private $_responseInstance = null;
+    private $_modelInstanceArray = [];
     private $_hookInstanceArray = [];
     public static function getInstance()
     {
@@ -19,6 +17,7 @@ final class Application
     }
     public function __construct()
     {
+        $this->_configInstance = new Config();
         $this->_requestInstance = new Request();
         $this->_responseInstance = new Response();
     }
@@ -50,13 +49,13 @@ final class Application
         unset($routerInstance);
         // todo: beforeDispatch Hook
         // 执行分发
-        $controller = ucfirst($this->_requestInstance->getControllerName()) . self::CONTROLLER_SUFFIX;
+        $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
             throw new FileNotFoundException($controllerFile, '控制器文件丢失');
         }
         require $controllerFile;
-        $action = $this->_requestInstance->getActionName() . self::ACTION_SUFFIX;
+        $action = $this->_requestInstance->getActionName() . 'Action';
         $controllerInstance = new $controller();
         if (!method_exists($controllerInstance, $action)) {
             throw new UndefinedException('function', $action, '控制器 ' . $controller . ' 下未定义动作');
@@ -79,6 +78,10 @@ final class Application
     {
         $this->_isViewRender = false;
     }
+    public function getConfigInstance()
+    {
+        return $this->_configInstance;
+    }
     public function getRequestInstance()
     {
         return $this->_requestInstance;
@@ -86,6 +89,22 @@ final class Application
     public function getResponseInstance()
     {
         return $this->_responseInstance;
+    }
+    public function getModelInstance($modelName)
+    {
+        $modelName = ucfirst($modelName) . 'Model';
+        if (!isset($this->_modelInstanceArray[$modelName])) {
+            $modelFile = ROOT . '/application/model/' . $modelName . '.php';
+            if (!is_file($modelFile)) {
+                throw new FileNotFoundException($modelFile, '模型文件丢失');
+            }
+            require $modelFile;
+            if (!class_exists($modelName, false)) {
+                throw new UndefinedException('class', $modelName, '模型类未定义');
+            }
+            $this->_modelInstanceArray[$modelName] = new $modelName();
+        }
+        return $this->_modelInstanceArray[$modelName];
     }
     public function registerHook($hookInstance)
     {
@@ -96,6 +115,14 @@ final class Application
 abstract class ControllerAbstract
 {
 }
+abstract class ModelAbstract
+{
+    protected $_db = null;
+    public function __construct()
+    {
+        $this->_db = DatabaseFactory::getDriverInstance();
+    }
+}
 interface HookInterface
 {
     public function beforeRoute();
@@ -103,12 +130,53 @@ interface HookInterface
     public function beforeRender();
     public function beforeResponse();
 }
-abstract class ModelAbstract
+class Config
 {
-    protected $_db = null;
-    public function __construct()
+    private $_configArray = null;
+    public function __construct($configArray = null)
     {
-        $this->_db = DatabaseFactory::getDriverInstance();
+        if ($configArray !== null) {
+            $this->_configArray = $configArray;
+        } else {
+            // 系统配置
+            $systemConfigFile = ROOT . '/application/config/' . ENV . '.php';
+            if (!is_file($systemConfigFile)) {
+                throw new FileNotFoundException($systemConfigFile, '系统配置文件丢失');
+            }
+            $config = include $systemConfigFile;
+            // 应用配置
+            $moduleConfigFile = ROOT . '/application/module/' . MODULE . '/config/' . ENV . '.php';
+            if (is_file($moduleConfigFile)) {
+                $config = array_merge(
+                    $config,
+                    include $moduleConfigFile
+                );
+            }
+            $this->_configArray = $config;
+        }
+    }
+    public function get($key)
+    {
+        $ret = null;
+        if (strpos($key, '.') > 0) {
+            $array = explode('.', $key);
+            switch (count($array)) {
+                case 2:
+                    $ret = isset($this->_configArray[$array[0]][$array[1]]) ? $this->_configArray[$array[0]][$array[1]] : null;
+                    break;
+                case 3:
+                    $ret = isset($this->_configArray[$array[0]][$array[1]][$array[2]]) ? $this->_configArray[$array[0]][$array[1]][$array[2]] : null;
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            $ret = isset($this->_configArray[$key]) ? $this->_configArray[$key] : null;
+        }
+        if (is_null($ret)) {
+            throw new UndefinedException('config', $key, '配置不存在');
+        }
+        return $ret;
     }
 }
 final class Request
@@ -217,11 +285,13 @@ final class Response
 }
 final class Router
 {
+    const DEFAULT_CONTROLLER_NAME = 'index';
+    const DEFAULT_ACTION_NAME = 'index';
     public function route()
     {
         $requestInstance = Application::getInstance()->getRequestInstance();
-        $controllerName = $requestInstance->getGlobalQuery('c', Application::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
-        $actionName = $requestInstance->getGlobalQuery('a', Application::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
+        $controllerName = $requestInstance->getGlobalQuery('c', self::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
+        $actionName = $requestInstance->getGlobalQuery('a', self::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
         $requestInstance->setControllerName($controllerName)->setActionName($actionName);
     }
 }
@@ -550,8 +620,7 @@ final class DatabaseFactory
     {
         $driverName = $driverName === null ? C('db.driver') : $driverName;
         if (!isset(self::$_driverInstanceArray[$driverName])) {
-            $class = 'library\\database\\' . $driverName;
-            self::$_driverInstanceArray[$driverName] = new $class();
+            self::$_driverInstanceArray[$driverName] = new $driverName();
         }
         return self::$_driverInstanceArray[$driverName];
     }

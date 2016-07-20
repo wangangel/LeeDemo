@@ -6,17 +6,8 @@
  * Date: 2016/7/18 10:27
  */
 
-namespace application\model;
-
-use library\ModelAbstract;
-
 class UserModel extends ModelAbstract
 {
-    public function getCurrent()
-    {
-
-    }
-
     public function test()
     {
         $ret = $this->_db

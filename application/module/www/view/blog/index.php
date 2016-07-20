@@ -8,7 +8,7 @@
 <body>
     <div class="wrap">
         <div class="content">
-            <?php include dirname(__DIR__) . SP . '__header.php' ; ?>
+            <?php include dirname(__DIR__) . '/header.php' ; ?>
             <div class="main">
                 <div class="primary">
                     <?php echo microtime(true) - START_TIME; ?>

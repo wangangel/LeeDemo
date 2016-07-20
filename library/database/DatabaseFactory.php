@@ -24,8 +24,7 @@ final class DatabaseFactory
         $driverName = $driverName === null ? C('db.driver') : $driverName;
 
         if (!isset(self::$_driverInstanceArray[$driverName])) {
-            $class = 'library\\database\\' . $driverName;
-            self::$_driverInstanceArray[$driverName] = new $class();
+            self::$_driverInstanceArray[$driverName] = new $driverName();
         }
 
         return self::$_driverInstanceArray[$driverName];

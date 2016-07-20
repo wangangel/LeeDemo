@@ -21,7 +21,7 @@ class BlogController extends ControllerAbstract
      */
     public function indexAction()
     {
-        // M('user')->test();
+        M('user')->test();
     }
 
     /**
@@ -29,7 +29,11 @@ class BlogController extends ControllerAbstract
      */
     public function postListAction()
     {
+        $data = M('post')->getPagedList();
 
+        return [
+            'data' => $data
+        ];
     }
 
     /**

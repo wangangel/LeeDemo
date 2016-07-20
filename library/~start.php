@@ -57,7 +57,7 @@ if (is_file($moduleFuncFile)) {
 $runtimeFile = ROOT . '/library/~runtime.php';
 if (!is_file($runtimeFile)) {
     $libraries = array_merge(
-        ['Application', 'ControllerAbstract', 'HookInterface', 'Log', 'ModelAbstract', 'Request', 'Response', 'Router', 'Session', 'View'],
+        ['Application', 'ControllerAbstract', 'ModelAbstract', 'HookInterface', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
         ['database/DatabaseInterface', 'database/Mysqlii', 'database/DatabaseFactory'],
         ['exception/ExceptionAbstract', 'exception/DatabaseException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/SystemException']
     );
@@ -83,7 +83,13 @@ require $runtimeFile;
 try {
     Application::getInstance()->bootstrap()->run();
 } catch (\Exception $e) {
-    echo $e->getMessage();
-    var_dump($e->getTrace());
-    die;
+    $header = '<h3>' . $e->getMessage() . '</h3>';
+
+    $list = null;
+    foreach ($e->getTrace() as $trace) {
+        $list .= '<li>[line ' . $trace['line'] . '] ' . $trace['file'] . ' (' . (isset($trace['class']) ? $trace['function'] . '/' : '') . $trace['function'] . ')</li>';
+    }
+    $list = '<ul>' . $list . '</ul>';
+
+    exit($header . $list);
 }

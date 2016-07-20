@@ -8,10 +8,10 @@
 <body>
     <div class="wrap">
         <div class="content">
-            <?php include dirname(__DIR__) . SP . '__header.php' ; ?>
+            <?php include dirname(__DIR__) . '/header.php' ; ?>
             <div class="main">
                 <div class="primary">
-                    123
+                    <?php var_dump($data); ?>
                 </div>
                 <div class="sidebar">
                     asdsad

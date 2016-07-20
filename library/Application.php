@@ -9,26 +9,6 @@
 final class Application
 {
     /**
-     * 默认的控制器名称
-     */
-    const DEFAULT_CONTROLLER_NAME = 'index';
-
-    /**
-     * 默认的动作名称
-     */
-    const DEFAULT_ACTION_NAME = 'index';
-
-    /**
-     * 控制器后缀
-     */
-    const CONTROLLER_SUFFIX = 'Controller';
-
-    /**
-     * 动作后缀
-     */
-    const ACTION_SUFFIX = 'Action';
-
-    /**
      * @var Application|null 当前对象
      */
     private static $_instance = null;
@@ -39,6 +19,11 @@ final class Application
     private $_isViewRender = true;
 
     /**
+     * @var Config|null 配置对象
+     */
+    private $_configInstance = null;
+
+    /**
      * @var Request|null 请求对象
      */
     private $_requestInstance = null;
@@ -47,6 +32,11 @@ final class Application
      * @var Response|null 响应对象
      */
     private $_responseInstance = null;
+
+    /**
+     * @var array 模型对象数组
+     */
+    private $_modelInstanceArray = [];
 
     /**
      * @var array 钩子对象数组
@@ -72,6 +62,7 @@ final class Application
      */
     public function __construct()
     {
+        $this->_configInstance = new Config();
         $this->_requestInstance = new Request();
         $this->_responseInstance = new Response();
     }
@@ -133,14 +124,14 @@ final class Application
         // todo: beforeDispatch Hook
 
         // 执行分发
-        $controller = ucfirst($this->_requestInstance->getControllerName()) . self::CONTROLLER_SUFFIX;
+        $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
             throw new FileNotFoundException($controllerFile, '控制器文件丢失');
         }
         require $controllerFile;
 
-        $action = $this->_requestInstance->getActionName() . self::ACTION_SUFFIX;
+        $action = $this->_requestInstance->getActionName() . 'Action';
         $controllerInstance = new $controller();
         if (!method_exists($controllerInstance, $action)) {
             throw new UndefinedException('function', $action, '控制器 ' . $controller . ' 下未定义动作');
@@ -174,6 +165,16 @@ final class Application
     }
 
     /**
+     * 获取配置对象
+     *
+     * @return Config|null
+     */
+    public function getConfigInstance()
+    {
+        return $this->_configInstance;
+    }
+
+    /**
      * 获取请求对象
      *
      * @return Request|null
@@ -191,6 +192,36 @@ final class Application
     public function getResponseInstance()
     {
         return $this->_responseInstance;
+    }
+
+    /**
+     * 获取模型对象
+     *
+     * 使用：getModelInstance('user') 则创建 UserModel
+     *
+     * @param string $modelName
+     * @return ModelAbstract
+     * @throws FileNotFoundException
+     * @throws UndefinedException
+     */
+    public function getModelInstance($modelName)
+    {
+        $modelName = ucfirst($modelName) . 'Model';
+
+        if (!isset($this->_modelInstanceArray[$modelName])) {
+            $modelFile = ROOT . '/application/model/' . $modelName . '.php';
+            if (!is_file($modelFile)) {
+                throw new FileNotFoundException($modelFile, '模型文件丢失');
+            }
+            require $modelFile;
+
+            if (!class_exists($modelName, false)) {
+                throw new UndefinedException('class', $modelName, '模型类未定义');
+            }
+            $this->_modelInstanceArray[$modelName] = new $modelName();
+        }
+
+        return $this->_modelInstanceArray[$modelName];
     }
 
     /**

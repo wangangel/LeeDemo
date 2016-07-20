@@ -10,7 +10,7 @@ return [
     # 数据库配置
     'db' => [
         # 当前驱动（请注意大小写）
-        'driver' => 'Mysqli',
+        'driver' => 'Mysqlii',
         # 主库
         'master' => [
             'host' => 'localhost',
