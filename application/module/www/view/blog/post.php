@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>日志</title>
+    <title><?php echo $post['title']; ?></title>
     <link rel="stylesheet" type="text/css" href="/css/style.css">
 </head>
 <body>
@@ -12,7 +12,12 @@
             <div class="main">
                 <div class="primary">
                     <div class="post">
-                        asd
+                        <div class="pt-title">
+                            <h1><?php echo $post['title']; ?></h1>
+                        </div>
+                        <div class="pt-body">
+                            <?php echo $post['body']; ?>
+                        </div>
                     </div>
                 </div>
                 <div class="sidebar">

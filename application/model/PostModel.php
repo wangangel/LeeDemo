@@ -8,10 +8,17 @@
 
 class PostModel extends ModelAbstract
 {
-    public function getPostById($postId)
+    /**
+     * 根据 ID 获取文章
+     *
+     * @param int $postId
+     * @return array
+     */
+    public function getById($postId)
     {
         return $this->_db->table('post')->where('id', 'eq', $postId)->limit(1)->select();
     }
+
 
     public function getPagedList()
     {

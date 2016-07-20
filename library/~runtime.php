@@ -647,6 +647,19 @@ class FileNotFoundException extends ExceptionAbstract
         return $this->_filePath;
     }
 }
+class HttpException extends ExceptionAbstract
+{
+    private $_statusCode = null;
+    public function __construct($statusCode, $message, $code = 0)
+    {
+        $this->_statusCode = $statusCode;
+        parent::__construct($message, $code);
+    }
+    public function getStatusCode()
+    {
+        return $this->_statusCode;
+    }
+}
 class SystemException extends ExceptionAbstract
 {
     public function __construct($message, $code = 0)

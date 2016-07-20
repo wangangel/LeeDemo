@@ -9,13 +9,10 @@
 
 
 
-
-
-
 * {margin:0;padding:0;}
 body {font-family:arial,sans-serif;font-size:12px;}
 ul,li {list-style:none;}
-a {color:#369;text-decoration:none;}
+a {color:#105cb6;text-decoration:none;}
 a:hover {color:red;text-decoration:underline;}
 
 
@@ -41,3 +38,9 @@ a:hover {color:red;text-decoration:underline;}
 .post-list ul li div.pl-title {padding-bottom:10px;}
 .post-list ul li div.pl-title strong a {font-size:14px;}
 .post-list ul li div.pl-description p {font-size:14px;color:#666;line-height:23px;}
+
+
+.post div.pt-title {margin-bottom:20px;}
+.post div.pt-title h1 {font-size:16px;}
+.post div.pt-body {font-size:14px;line-height:23px;}
+.post div.pt-body p {margin-bottom:20px;}

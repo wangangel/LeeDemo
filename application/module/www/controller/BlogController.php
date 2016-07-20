@@ -41,10 +41,33 @@ class BlogController extends ControllerAbstract
      */
     public function postAction()
     {
-        $postId = 1;
+        $postId = I('get', 'postId', 0, 'intval');
 
-        $post = M('post')->getPostById($postId);
+        $post = M('post')->getById($postId);
+        if (empty($post)) {
+            throw new HttpException(404, '该文章不存在');
+        } else {
+            $post = $post[0];
+            $status = intval($post['status']);
 
-        var_dump($post);
+            if ($status === 0) {
+                throw new HttpException(404, '无效的文章状态');
+            } elseif ($status === 1) {
+                throw new HttpException(404, '该文章正在审核中');
+            } elseif ($status === 3) {
+                throw new HttpException(404, '该文章已被删除');
+            }
+        }
+
+        $postBody = M('postBody')->getById($postId);
+        if (empty($postBody)) {
+            throw new HttpException(404, '文章正文丢失');
+        }
+        $post['body'] = $postBody[0]['body'];
+
+        return [
+            'user' => '',
+            'post' => $post
+        ];
     }
 }

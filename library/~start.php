@@ -59,7 +59,7 @@ if (!is_file($runtimeFile)) {
     $libraries = array_merge(
         ['Application', 'ControllerAbstract', 'ModelAbstract', 'HookInterface', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
         ['database/DatabaseInterface', 'database/Mysqlii', 'database/DatabaseFactory'],
-        ['exception/ExceptionAbstract', 'exception/DatabaseException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/SystemException']
+        ['exception/ExceptionAbstract', 'exception/DatabaseException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException', 'exception/SystemException']
     );
     $cache = null;
     foreach ($libraries as $file) {
