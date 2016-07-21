@@ -7,11 +7,12 @@
  */
 
 return [
-    # 数据库配置
+    // 数据库配置
     'db' => [
-        # 当前驱动（请注意大小写）
+        // 当前驱动（请注意大小写）
         'driver' => 'Mysqlii',
-        # 主库
+
+        // 主库
         'master' => [
             'host' => 'localhost',
             'dbname' => 'blog',
@@ -19,7 +20,8 @@ return [
             'password' => '',
             'charset' => 'UTF8'
         ],
-        # 从库
+
+        // 从库
         'slave' => [
             [
                 'host' => 'localhost',
@@ -38,7 +40,7 @@ return [
         ]
     ],
 
-    # 显示设置
+    // 显示设置
     'display' => [
         'postNumPerPage' => 15  // 日志列表每页数量
     ]

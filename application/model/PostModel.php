@@ -46,7 +46,7 @@ class PostModel extends ModelAbstract
     }
 
     /**
-     * 根据 id 获取文章
+     * 根据 id 和 user_id 获取文章
      *
      * @param int $postId
      * @param int $userId

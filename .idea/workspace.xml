@@ -108,15 +108,15 @@
         <option value="$PROJECT_DIR$/library/~start.php" />
         <option value="$PROJECT_DIR$/application/module/www/common/function.php" />
         <option value="$PROJECT_DIR$/application/model/PostBodyModel.php" />
-        <option value="$PROJECT_DIR$/application/config/development.php" />
         <option value="$PROJECT_DIR$/application/model/UserModel.php" />
         <option value="$PROJECT_DIR$/application/model/PostCategoryModel.php" />
-        <option value="$PROJECT_DIR$/application/model/PostModel.php" />
         <option value="$PROJECT_DIR$/application/module/www/view/blog/post.php" />
         <option value="$PROJECT_DIR$/application/module/www/view/blog_header.php" />
         <option value="$PROJECT_DIR$/application/module/www/controller/BlogController.php" />
         <option value="$PROJECT_DIR$/application/module/www/view/blog/postList.php" />
         <option value="$PROJECT_DIR$/public/www/css/style.css" />
+        <option value="$PROJECT_DIR$/application/model/PostModel.php" />
+        <option value="$PROJECT_DIR$/application/config/development.php" />
       </list>
     </option>
   </component>
@@ -627,7 +627,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="251" y="40" width="1486" height="964" extended-state="1" />
+    <frame x="251" y="40" width="1486" height="964" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -983,14 +983,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/application/config/development.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.79795396" vertical-offset="0" max-vertical-offset="782">
-          <caret line="44" column="2" selection-start-line="44" selection-start-column="2" selection-end-line="44" selection-end-column="2" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/public/www/index.php">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.2455243" vertical-offset="0" max-vertical-offset="782">
@@ -1049,16 +1041,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/application/model/PostModel.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="1.3299233" vertical-offset="0" max-vertical-offset="1952">
-          <caret line="65" column="23" selection-start-line="65" selection-start-column="23" selection-end-line="65" selection-end-column="23" />
-          <folding>
-            <element signature="e#6#84#0#PHP" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/application/model/PostCategoryModel.php">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="1.3682865" vertical-offset="322" max-vertical-offset="1488">
@@ -1076,6 +1058,24 @@
           <folding>
             <element signature="e#6#88#0#PHP" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/application/model/PostModel.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.6432225" vertical-offset="265" max-vertical-offset="1952">
+          <caret line="48" column="23" selection-start-line="48" selection-start-column="23" selection-end-line="48" selection-end-column="23" />
+          <folding>
+            <element signature="e#6#84#0#PHP" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/application/config/development.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.8388747" vertical-offset="0" max-vertical-offset="782">
+          <caret line="46" column="2" selection-start-line="46" selection-start-column="2" selection-end-line="46" selection-end-column="2" />
+          <folding />
         </state>
       </provider>
     </entry>
