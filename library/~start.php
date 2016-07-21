@@ -7,7 +7,7 @@
  */
 
 /**
- * 版本检查（5.3 开始支持 namespace，5.4 开始支持数组简写，所以版本限制到 5.4）
+ * 版本检查（5.3 开始支持 namespace，5.4 开始支持数组简写和 session_set_save_handler，所以版本限制到 5.4）
  */
 if (version_compare(PHP_VERSION, '5.4.0', '<')) {
     exit('PHP 版本不能低于 5.4');
@@ -30,7 +30,7 @@ if (ENV === 'development' || ENV === 'test') {
 define('START_TIME', microtime(true));              // 开始执行的时间
 define('START_MEMORY', memory_get_usage(true));     // 开始执行的内存用量
 define('ROOT', dirname(__DIR__));                   // 根目录
-define('SESSION_SAVE_HANDLER', 'user');             // session.save_handler
+define('SESSION_CACHE_ENABLE', true);               // 是否开启 cache 存储 SESSION
 
 /**
  * 时区
@@ -58,8 +58,9 @@ $runtimeFile = ROOT . '/library/~runtime.php';
 if (!is_file($runtimeFile)) {
     $libraries = array_merge(
         ['Application', 'ControllerAbstract', 'ModelAbstract', 'HookInterface', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
+        ['cache/CacheInterface', 'cache/Memcachedd', 'cache/CacheFactory'],
         ['database/DatabaseInterface', 'database/Mysqlii', 'database/DatabaseFactory'],
-        ['exception/ExceptionAbstract', 'exception/DatabaseException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException', 'exception/SystemException']
+        ['exception/ExceptionAbstract', 'exception/StorageException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException']
     );
     $cache = null;
     foreach ($libraries as $file) {

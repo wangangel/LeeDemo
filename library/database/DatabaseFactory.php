@@ -16,12 +16,14 @@ final class DatabaseFactory
     /**
      * 获取数据库驱动
      *
+     * 显式调用该方法可以临时切换数据库驱动
+     *
      * @param string $driverName
      * @return DatabaseInterface
      */
     public static function getDriverInstance($driverName = null)
     {
-        $driverName = $driverName === null ? C('db.driver') : $driverName;
+        $driverName = $driverName === null ? ucfirst(C('database.driver')) : $driverName;
 
         if (!isset(self::$_driverInstanceArray[$driverName])) {
             self::$_driverInstanceArray[$driverName] = new $driverName();

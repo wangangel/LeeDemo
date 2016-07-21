@@ -9,15 +9,15 @@
 abstract class ModelAbstract
 {
     /**
-     * @var DatabaseInterface|null 当前数据库连接
+     * @var DatabaseInterface|null 数据库驱动对象
      */
-    protected $_db = null;
+    protected $_databaseInstance = null;
 
     /**
      * 构造器
      */
     public function __construct()
     {
-        $this->_db = DatabaseFactory::getDriverInstance();
+        $this->_databaseInstance = DatabaseFactory::getDriverInstance();
     }
 }

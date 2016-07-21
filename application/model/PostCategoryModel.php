@@ -54,7 +54,7 @@ class PostCategoryModel extends ModelAbstract
      */
     public function getOwnerById($categoryId, $userId)
     {
-        return $this->_db
+        return $this->_databaseInstance
             ->table('post_category')
             ->where([
                 'and' => [
@@ -74,7 +74,7 @@ class PostCategoryModel extends ModelAbstract
      */
     public function getNormalListByUserId($userId)
     {
-        return $this->_db
+        return $this->_databaseInstance
             ->table('post_category')
             ->where([
                 'and' => [

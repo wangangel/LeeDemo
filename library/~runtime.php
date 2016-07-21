@@ -42,13 +42,23 @@ final class Application
     }
     public function run()
     {
+        if (SESSION_CACHE_ENABLE) {
+            $sessionInstance = new Session();
+            session_set_save_handler($sessionInstance, false);
+        }
+        // 如果开启了 cache 保存 SESSION，则关闭垃圾回收（通过 cache 自身的失效机制）
+        if (SESSION_CACHE_ENABLE) {
+            ini_set('session.gc_probability', 0);
+        } else {
+            ini_set('session.gc_probability', 1);
+        }
+        ini_set('session.auto_start', 0);
+        session_start();
         // todo: beforeRoute Hook
-        // 执行路由
         $routerInstance = new Router();
         $routerInstance->route();
         unset($routerInstance);
         // todo: beforeDispatch Hook
-        // 执行分发
         $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
@@ -63,7 +73,6 @@ final class Application
         $ret = $controllerInstance->$action();
         unset($controllerInstance);
         // todo: beforeRender Hook
-        // 是否渲染视图
         if ($this->_isViewRender) {
             $viewInstance = new View();
             $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
@@ -71,7 +80,6 @@ final class Application
         }
         $this->_responseInstance->setBody($ret);
         // todo: beforeResponse Hook
-        // 执行响应
         $this->_responseInstance->response();
     }
     public function disableView()
@@ -117,10 +125,10 @@ abstract class ControllerAbstract
 }
 abstract class ModelAbstract
 {
-    protected $_db = null;
+    protected $_databaseInstance = null;
     public function __construct()
     {
-        $this->_db = DatabaseFactory::getDriverInstance();
+        $this->_databaseInstance = DatabaseFactory::getDriverInstance();
     }
 }
 interface HookInterface
@@ -130,7 +138,7 @@ interface HookInterface
     public function beforeRender();
     public function beforeResponse();
 }
-class Config
+final class Config
 {
     private $_configArray = null;
     public function __construct($configArray = null)
@@ -277,20 +285,30 @@ final class Router
         Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
     }
 }
-final class Session
+final class Session implements \SessionHandlerInterface
 {
-    private static $_instance = null;
+    private $_cacheInstance = null;
     public function __construct()
     {
-        session_start();
-        ini_set('session.save_handler', SESSION_SAVE_HANDLER);
+        $this->_cacheInstance = CacheFactory::getDriverInstance();
     }
-    public static function getInstance()
+    public function open($savePath, $sessionName)
     {
-        if (self::$_instance === null) {
-            self::$_instance = new self();
-        }
-        return self::$_instance;
+    }
+    public function read($sessionId)
+    {
+    }
+    public function write($sessionId , $sessionData)
+    {
+    }
+    public function close()
+    {
+    }
+    public function destroy($sessionId)
+    {
+    }
+    public function gc($maxLifetime)
+    {
     }
 }
 final class View
@@ -312,6 +330,49 @@ final class View
         include($viewFile);
         $ret = ob_get_clean();
         return $ret;
+    }
+}
+interface CacheInterface
+{
+    public function get($key);
+    public function set($key, $value, $expiration);
+}
+final class Memcachedd implements CacheInterface
+{
+    private $_memcachedInstance = null;
+    public function __construct()
+    {
+        try {
+            $memcached = new \Memcached();
+            $memcached->addServers(C('cache.servers'));
+            $this->_memcachedInstance = $memcached;
+        } catch (\MemcachedException $e) {
+            throw new StorageException('memcached', $e->getMessage(), $e->getCode());
+        }
+    }
+    public function get($key)
+    {
+        $value = $this->_memcachedInstance->get($key);
+        if ($value === \Memcached::RES_NOTFOUND) {
+            return false;
+        }
+        return $value;
+    }
+    public function set($key, $value, $expiration = 0)
+    {
+        return $this->_memcachedInstance->set($key, $value, $expiration);
+    }
+}
+final class CacheFactory
+{
+    private static $_driverInstanceArray = [];
+    public static function getDriverInstance($driverName = null)
+    {
+        $driverName = $driverName === null ? ucfirst(C('cache.driver')) : $driverName;
+        if (!isset(self::$_driverInstanceArray[$driverName])) {
+            self::$_driverInstanceArray[$driverName] = new $driverName;
+        }
+        return self::$_driverInstanceArray[$driverName];
     }
 }
 interface DatabaseInterface
@@ -341,11 +402,11 @@ final class Mysqlii implements DatabaseInterface
     private $_data = [];
     public function getConnect($isMaster)
     {
-        $config = C('db');
+        $database = C('database');
         if ($isMaster) {
-            $config = $config['master'];
+            $config = $database['master'];
         } else {
-            $config = $config['slave'][mt_rand(0, 1)];
+            $config = $database['slaves'][mt_rand(0, count($database['slaves']) - 1)];
         }
         // 一种配置对应一个连接
         $key = md5(implode('', $config));
@@ -353,7 +414,7 @@ final class Mysqlii implements DatabaseInterface
             $connect = new \Mysqli($config['host'], $config['username'], $config['password'], $config['dbname']);
             $connect->query('SET NAMES ' . $config['charset']);
             if (mysqli_connect_errno()) {
-                throw new DatabaseException('mysqli getConnect: ' . mysqli_connect_error());
+                throw new StorageException('mysqli', 'getConnect: ' . mysqli_connect_error());
             }
             $this->_connectArray[$key] = $connect;
         }
@@ -364,7 +425,7 @@ final class Mysqlii implements DatabaseInterface
         $query = $this->getConnect(false)->query($sql);
         if ($query === false) {
             // todo: log
-            throw new DatabaseException('mysqli query: ' . $sql);
+            throw new StorageException('mysqli', 'query: ' . $sql);
         }
         $result = [];
         if ($query->num_rows > 0) {
@@ -385,7 +446,7 @@ final class Mysqlii implements DatabaseInterface
             $field = '*';
         } elseif ($num === 1) {
             if (!is_string($args[0])) {
-                throw new DatabaseException('mysqli field: 无效的参数');
+                throw new StorageException('mysqli', 'field: 无效的参数');
             }
             $field = $args[0] === '*' ? '*' : $args[0];
         } else {
@@ -396,7 +457,7 @@ final class Mysqlii implements DatabaseInterface
                 } elseif (is_array($arg)) {
                     $array[] = array_keys($arg)[0] . ' AS ' . $arg[array_keys($arg)[0]];
                 } else {
-                    throw new DatabaseException('mysqli field: 无效的参数');
+                    throw new StorageException('mysqli', 'field: 无效的参数');
                 }
             }
             $field = implode(', ', $array);
@@ -407,7 +468,7 @@ final class Mysqlii implements DatabaseInterface
     public function table($tableName)
     {
         if (empty($tableName)) {
-            throw new DatabaseException('mysqli table: 缺少参数 -> $tableName');
+            throw new StorageException('mysqli', 'table: 缺少参数 -> $tableName');
         }
         $table = null;
         if (is_string($tableName)) {
@@ -415,7 +476,7 @@ final class Mysqlii implements DatabaseInterface
         } elseif (is_array($tableName)) {
             $table = array_keys($tableName)[0] . ' AS ' . $tableName[array_keys($tableName)[0]];
         } else {
-            throw new DatabaseException('mysqli table: 无效的参数 -> $tableName');
+            throw new StorageException('mysqli', 'table: 无效的参数 -> $tableName');
         }
         $this->_data['table'] = $table;
         return $this;
@@ -424,32 +485,32 @@ final class Mysqlii implements DatabaseInterface
     {
         $allowWays = ['inner', 'left', 'left outer', 'right', 'right outer', 'full', 'full outer'];
         if (!in_array(strtolower($way), $allowWays)) {
-            throw new DatabaseException('mysqli join: 无效的参数 -> $way');
+            throw new StorageException('mysqli', 'join: 无效的参数 -> $way');
         }
         $table = null;
         if (empty($tableName)) {
-            throw new DatabaseException('mysqli join: 缺少参数 -> $tableName');
+            throw new StorageException('mysqli', 'join: 缺少参数 -> $tableName');
         } else {
             if (is_string($tableName)) {
                 $table = $tableName;
             } elseif (is_array($tableName)) {
                 $table = array_keys($tableName)[0] . ' AS ' . $tableName[array_keys($tableName)[0]];
             } else {
-                throw new DatabaseException('mysqli join: 无效的参数 -> $tableName');
+                throw new StorageException('mysqli', 'join: 无效的参数 -> $tableName');
             }
         }
         if (empty($leftField)) {
-            throw new DatabaseException('mysqli join: 缺少参数 -> $leftField');
+            throw new StorageException('mysqli', 'join: 缺少参数 -> $leftField');
         } else {
             if (!is_string($leftField)) {
-                throw new DatabaseException('mysqli join: 无效的参数 -> $leftField');
+                throw new StorageException('mysqli', 'join: 无效的参数 -> $leftField');
             }
         }
         if (empty($rightField)) {
-            throw new DatabaseException('mysqli join: 缺少参数 -> $rightField');
+            throw new StorageException('mysqli', 'join: 缺少参数 -> $rightField');
         } else {
             if (!is_string($rightField)) {
-                throw new DatabaseException('mysqli join: 无效的参数 -> $rightField');
+                throw new StorageException('mysqli', 'join: 无效的参数 -> $rightField');
             }
         }
         $join = ' ' . strtoupper($way) . ' JOIN ' . $table . ' ON ' . $leftField . ' = ' . $rightField;
@@ -484,10 +545,10 @@ final class Mysqlii implements DatabaseInterface
             } elseif ($num === 3) {
                 $where = $this->_parseWhere($args[0], $args[1], $args[2]);
             } else {
-                throw new DatabaseException('mysqli where: 无效的参数');
+                throw new StorageException('mysqli', 'where: 无效的参数');
             }
         } else {
-            throw new DatabaseException('mysqli where: 缺少参数');
+            throw new StorageException('mysqli', 'where: 缺少参数');
         }
         $this->_data['where'] = ' WHERE ' . $where;
         return $this;
@@ -495,11 +556,11 @@ final class Mysqlii implements DatabaseInterface
     private function _parseWhere($field, $condition, $value)
     {
         if (!is_string($field) || !is_string($condition)) {
-            throw new DatabaseException('mysqli where: 无效的参数');
+            throw new StorageException('mysqli', 'where: 无效的参数');
         }
         $matches = ['eq', 'neq', 'lk', 'nlk', 'bt', 'nbt', 'in', 'nin'];
         if (!in_array($condition, $matches)) {
-            throw new DatabaseException('mysqli where: 无效的参数');
+            throw new StorageException('mysqli', 'where: 无效的参数');
         }
         $condition = str_replace(
             $matches,
@@ -523,7 +584,7 @@ final class Mysqlii implements DatabaseInterface
                 if (is_string($args[0])) {
                     $order = $args[0] . ' ASC';
                 } else {
-                    throw new DatabaseException('mysqli order: 无效的参数');
+                    throw new StorageException('mysqli', 'order: 无效的参数');
                 }
             } elseif ($num === 2) {
                 if (is_string($args[0]) && is_string($args[1])) {
@@ -531,20 +592,20 @@ final class Mysqlii implements DatabaseInterface
                 } elseif (is_array($args[0]) && count($args[0]) === 2 && in_array(strtolower($args[0][1]), ['asc', 'desc']) && is_array($args[1]) && count($args[1]) === 2 && in_array(strtolower($args[1][1]), ['asc', 'desc'])) {
                     $order = $args[0][0] . ' ' . strtoupper($args[0][1]) . ', ' . $args[1][0] . ' ' . strtoupper($args[1][1]);
                 } else {
-                    throw new DatabaseException('mysqli order: 无效的参数');
+                    throw new StorageException('mysqli', 'order: 无效的参数');
                 }
             } else {
                 $array = [];
                 foreach ($args as $arg) {
                     if (!is_array($arg) || count($arg) !== 2 || !in_array(strtolower($arg[1]), ['asc', 'desc'])) {
-                        throw new DatabaseException('mysqli order: 无效的参数');
+                        throw new StorageException('mysqli', 'order: 无效的参数');
                     }
                     $array[] = $arg[0] . ' ' . strtoupper($arg[1]);
                 }
                 $order = implode(', ', $array);
             }
         } else {
-            throw new DatabaseException('mysqli order: 缺少参数');
+            throw new StorageException('mysqli', 'order: 缺少参数');
         }
         $this->_data['order'] = ' ORDER BY ' . $order;
         return $this;
@@ -560,10 +621,10 @@ final class Mysqlii implements DatabaseInterface
             } elseif ($num === 2) {
                 $limit = $args[0] . ', ' . $args[1];
             } else {
-                throw new DatabaseException('mysqli limit: 参数数量有误');
+                throw new StorageException('mysqli', 'limit: 参数数量有误');
             }
         } else {
-            throw new DatabaseException('mysqli limit: 缺少参数');
+            throw new StorageException('mysqli', 'limit: 缺少参数');
         }
         $this->_data['limit'] = ' LIMIT ' . $limit;
         return $this;
@@ -572,7 +633,7 @@ final class Mysqlii implements DatabaseInterface
     {
         $field = isset($this->_data['field']) ? $this->_data['field'] : '*';
         if (!isset($this->_data['table'])) {
-            throw new DatabaseException('mysqli select: 缺少表名');
+            throw new StorageException('mysqli', 'select: 缺少表名');
         }
         $join = isset($this->_data['join']) ? $this->_data['join'] : '';
         $where = isset($this->_data['where']) ? $this->_data['where'] : '';
@@ -600,7 +661,7 @@ final class DatabaseFactory
     private static $_driverInstanceArray = [];
     public static function getDriverInstance($driverName = null)
     {
-        $driverName = $driverName === null ? C('db.driver') : $driverName;
+        $driverName = $driverName === null ? ucfirst(C('database.driver')) : $driverName;
         if (!isset(self::$_driverInstanceArray[$driverName])) {
             self::$_driverInstanceArray[$driverName] = new $driverName();
         }
@@ -608,11 +669,17 @@ final class DatabaseFactory
     }
 }
 class ExceptionAbstract extends \Exception {}
-class DatabaseException extends ExceptionAbstract
+class StorageException extends ExceptionAbstract
 {
-    public function __construct($message, $code = 0)
+    private $_name = null;
+    public function __construct($name, $message, $code = 0)
     {
+        $this->_name = $name;
         parent::__construct($message, $code);
+    }
+    public function getName()
+    {
+        return $this->_name;
     }
 }
 class UndefinedException extends ExceptionAbstract
@@ -658,12 +725,5 @@ class HttpException extends ExceptionAbstract
     public function getStatusCode()
     {
         return $this->_statusCode;
-    }
-}
-class SystemException extends ExceptionAbstract
-{
-    public function __construct($message, $code = 0)
-    {
-        parent::__construct($message, $code);
     }
 }

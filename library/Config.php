@@ -6,7 +6,7 @@
  * Date: 2016/7/20 13:18
  */
 
-class Config
+final class Config
 {
     /**
      * @var array|null 配置数组

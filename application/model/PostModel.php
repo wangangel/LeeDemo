@@ -46,7 +46,7 @@ class PostModel extends ModelAbstract
     }
 
     /**
-     * 根据 id 和 user_id 获取文章
+     * 根据 id 获取文章
      *
      * @param int $postId
      * @param int $userId
@@ -54,7 +54,7 @@ class PostModel extends ModelAbstract
      */
     public function getOwnerById($postId, $userId)
     {
-        return $this->_db
+        return $this->_databaseInstance
             ->table('post')
             ->where([
                 'and' => [
@@ -93,13 +93,13 @@ class PostModel extends ModelAbstract
 
         $per = C('display.postNumPerPage');
         if (empty($where)) {
-            $list = $this->_db
+            $list = $this->_databaseInstance
                 ->table('post')
                 ->order('id', 'desc')
                 ->limit(($page - 1) * $per, $per)
                 ->select();
         } else {
-            $list = $this->_db
+            $list = $this->_databaseInstance
                 ->table('post')
                 ->where($where)
                 ->order('id', 'desc')

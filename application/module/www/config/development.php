@@ -6,4 +6,4 @@
  * Date: 2016/7/6 14:34
  */
 
-return array();
+return [];

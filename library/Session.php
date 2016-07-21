@@ -6,33 +6,55 @@
  * Date: 2016/7/16 9:22
  */
 
-final class Session
+final class Session implements \SessionHandlerInterface
 {
     /**
-     * @var Session|null 当前对象
+     * @var CacheInterface|null 缓存对象
      */
-    private static $_instance = null;
+    private $_cacheInstance = null;
 
     /**
      * 构造器
      */
     public function __construct()
     {
-        session_start();
-        ini_set('session.save_handler', SESSION_SAVE_HANDLER);
+        $this->_cacheInstance = CacheFactory::getDriverInstance();
     }
 
     /**
-     * 获取单例对象
+     * 自动开始会话或者通过调用 session_start() 手动开始会话之后第一个被调用的回调函数
      *
-     * @return Session|null
+     * @param string $savePath
+     * @param string $sessionName
+     * @return bool
      */
-    public static function getInstance()
+    public function open($savePath, $sessionName)
     {
-        if (self::$_instance === null) {
-            self::$_instance = new self();
-        }
 
-        return self::$_instance;
+    }
+
+    public function read($sessionId)
+    {
+
+    }
+
+    public function write($sessionId , $sessionData)
+    {
+
+    }
+
+    public function close()
+    {
+
+    }
+
+    public function destroy($sessionId)
+    {
+
+    }
+
+    public function gc($maxLifetime)
+    {
+
     }
 }

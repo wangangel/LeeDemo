@@ -53,7 +53,7 @@ class UserModel extends ModelAbstract
      */
     public function getById($userId)
     {
-        return $this->_db
+        return $this->_databaseInstance
             ->table('user')
             ->where('id', 'eq', $userId)
             ->limit(1)

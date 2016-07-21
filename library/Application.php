@@ -114,16 +114,38 @@ final class Application
      */
     public function run()
     {
+        /**
+         * 初始化 SESSION
+         */
+        if (SESSION_CACHE_ENABLE) {
+            $sessionInstance = new Session();
+            session_set_save_handler($sessionInstance, false);
+        }
+
+        // 如果开启了 cache 保存 SESSION，则关闭垃圾回收（通过 cache 自身的失效机制）
+        if (SESSION_CACHE_ENABLE) {
+            ini_set('session.gc_probability', 0);
+        } else {
+            ini_set('session.gc_probability', 1);
+        }
+
+        ini_set('session.auto_start', 0);
+        session_start();
+
         // todo: beforeRoute Hook
 
-        // 执行路由
+        /**
+         * 执行路由
+         */
         $routerInstance = new Router();
         $routerInstance->route();
         unset($routerInstance);
 
         // todo: beforeDispatch Hook
 
-        // 执行分发
+        /**
+         * 执行分发
+         */
         $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
@@ -142,7 +164,9 @@ final class Application
 
         // todo: beforeRender Hook
 
-        // 是否渲染视图
+        /**
+         * 是否渲染视图
+         */
         if ($this->_isViewRender) {
             $viewInstance = new View();
             $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
@@ -152,7 +176,9 @@ final class Application
 
         // todo: beforeResponse Hook
 
-        // 执行响应
+        /**
+         * 执行响应
+         */
         $this->_responseInstance->response();
     }
 

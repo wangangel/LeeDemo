@@ -8,9 +8,9 @@
 
 return [
     // 数据库配置
-    'db' => [
-        // 当前驱动（请注意大小写）
-        'driver' => 'Mysqlii',
+    'database' => [
+        // 当前驱动
+        'driver' => 'mysqlii',
 
         // 主库
         'master' => [
@@ -22,7 +22,7 @@ return [
         ],
 
         // 从库
-        'slave' => [
+        'slaves' => [
             [
                 'host' => 'localhost',
                 'dbname' => 'blog',
@@ -36,6 +36,18 @@ return [
                 'username' => 'root',
                 'password' => '',
                 'charset' => 'UTF8'
+            ]
+        ]
+    ],
+
+    // 缓存配置
+    'cache' => [
+        'driver' => 'memcachedd',
+
+        'servers' => [
+            [
+                'HOST' => '127.0.0.1',
+                'PORT' => 11211
             ]
         ]
     ],

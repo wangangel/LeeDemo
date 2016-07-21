@@ -16,7 +16,7 @@ class PostBodyModel extends ModelAbstract
      */
     public function getByPostId($postId)
     {
-        return $this->_db
+        return $this->_databaseInstance
             ->table('post_body')
             ->where('post_id', 'eq', $postId)
             ->limit(1)
