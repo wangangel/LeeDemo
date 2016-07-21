@@ -105,13 +105,14 @@ final class Application
             throw new UndefinedException('class', 'Bootstrap', '当前应用的初始化类未定义');
         }
 
-        $obj = new Bootstrap();
-        $methodArr = get_class_methods($obj);
+        $bootstrapInstance = new Bootstrap();
+        $methodArr = get_class_methods($bootstrapInstance);
         foreach ($methodArr as $method) {
             if (substr($method, 0, 5) === '_init') {
-                $obj->$method();
+                $bootstrapInstance->$method();
             }
         }
+        unset($bootstrapInstance);
 
         return $this;
     }
