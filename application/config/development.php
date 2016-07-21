@@ -36,5 +36,10 @@ return [
                 'charset' => 'UTF8'
             ]
         ]
+    ],
+
+    # 显示设置
+    'display' => [
+        'postNumPerPage' => 15  // 日志列表每页数量
     ]
 ];

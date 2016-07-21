@@ -9,13 +9,17 @@
 class PostBodyModel extends ModelAbstract
 {
     /**
-     * 根据 ID 获取文章正文
+     * 根据 post_id 获取文章正文
      *
      * @param int $postId
      * @return array
      */
-    public function getById($postId)
+    public function getByPostId($postId)
     {
-        return $this->_db->table('post_body')->where('post_id', 'eq', $postId)->limit(1)->select();
+        return $this->_db
+            ->table('post_body')
+            ->where('post_id', 'eq', $postId)
+            ->limit(1)
+            ->select();
     }
 }

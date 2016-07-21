@@ -8,27 +8,55 @@
 
 class UserModel extends ModelAbstract
 {
-    public function test()
-    {
-        $ret = $this->_db
-            ->field('id', ['email' => 'a'])
-            ->table(['user' => 'u'])
-            ->join('left outer', ['email' => 'a'], 'user.id', 'post.user_id')
-            ->join('inner', ['xxx' => 'a'], 'category.id', 'post.category_id')
-            ->where([
-                'or' => [
-                    ['name', 'lk', 'aaa'],
-                    'and' => [
-                        ['name', 'lk', 'aaa'],
-                        ['name', 'lk', 'aaa']
-                    ],
-                    ['name', 'lk', 'aaa']
-                ]
-            ])
-            ->order(['id', 'desc'], ['time', 'desc'], ['xxx', 'desc'])
-            ->limit(1, 12)
-            ->select();
+    /**
+     * 用户状态
+     */
+    const STATUS_VERIFY = 1;    // 待审核
+    const STATUS_NORMAL = 2;    // 正常
+    const STATUS_DELETE = 3;    // 已删除
 
-        var_dump($ret);
+    /**
+     * 获取待审核状态的值
+     *
+     * @return int
+     */
+    public function getStatusVerify()
+    {
+        return self::STATUS_VERIFY;
+    }
+
+    /**
+     * 获取正常状态的值
+     *
+     * @return int
+     */
+    public function getStatusNormal()
+    {
+        return self::STATUS_NORMAL;
+    }
+
+    /**
+     * 获取已删除状态的值
+     *
+     * @return int
+     */
+    public function getStatusDelete()
+    {
+        return self::STATUS_DELETE;
+    }
+
+    /**
+     * 根据 id 获取用户
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function getById($userId)
+    {
+        return $this->_db
+            ->table('user')
+            ->where('id', 'eq', $userId)
+            ->limit(1)
+            ->select();
     }
 }

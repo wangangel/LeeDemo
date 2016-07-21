@@ -9,26 +9,109 @@
 class PostModel extends ModelAbstract
 {
     /**
-     * 根据 ID 获取文章
-     *
-     * @param int $postId
-     * @return array
+     * 文章状态
      */
-    public function getById($postId)
+    const STATUS_VERIFY = 1;    // 待审核
+    const STATUS_NORMAL = 2;    // 正常
+    const STATUS_DELETE = 3;    // 已删除
+
+    /**
+     * 获取待审核状态的值
+     *
+     * @return int
+     */
+    public function getStatusVerify()
     {
-        return $this->_db->table('post')->where('id', 'eq', $postId)->limit(1)->select();
+        return self::STATUS_VERIFY;
     }
 
-
-    public function getPagedList()
+    /**
+     * 获取正常状态的值
+     *
+     * @return int
+     */
+    public function getStatusNormal()
     {
-        $list = $this->_db->table('post')->order('id', 'desc')->limit(0, 10)->select();
+        return self::STATUS_NORMAL;
+    }
 
-        $page = '';
+    /**
+     * 获取已删除状态的值
+     *
+     * @return int
+     */
+    public function getStatusDelete()
+    {
+        return self::STATUS_DELETE;
+    }
+
+    /**
+     * 根据 id 获取文章
+     *
+     * @param int $postId
+     * @param int $userId
+     * @return array
+     */
+    public function getOwnerById($postId, $userId)
+    {
+        return $this->_db
+            ->table('post')
+            ->where([
+                'and' => [
+                    ['id', 'eq', $postId],
+                    ['user_id', 'eq', $userId]
+                ]
+            ])
+            ->limit(1)
+            ->select();
+    }
+
+    /**
+     * 获取带分页的日志列表
+     *
+     * @param int $page
+     * @param int $userId
+     * @param int $categoryId
+     * @param int $status
+     * @return array
+     */
+    public function getPagedList($page, $userId = 0, $categoryId = 0, $status = 0)
+    {
+        $where = [];
+        if ($userId !== 0) {
+            $where[] = ['user_id', 'eq', $userId];
+        }
+        if ($categoryId !== 0) {
+            $where[] = ['category_id', 'eq', $categoryId];
+        }
+        if ($status !== 0) {
+            $where[] = ['status', 'eq', $status];
+        }
+        if (!empty($where)) {
+            $where = ['and' => $where];
+        }
+
+        $per = C('display.postNumPerPage');
+        if (empty($where)) {
+            $list = $this->_db
+                ->table('post')
+                ->order('id', 'desc')
+                ->limit(($page - 1) * $per, $per)
+                ->select();
+        } else {
+            $list = $this->_db
+                ->table('post')
+                ->where($where)
+                ->order('id', 'desc')
+                ->limit(($page - 1) * $per, $per)
+                ->select();
+        }
+
+        $pagenavi = '';
 
         return [
             'list' => $list,
-            'page' => $page
+            'pagenavi' => $pagenavi
         ];
     }
 }
