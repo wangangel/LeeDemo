@@ -58,8 +58,8 @@ $runtimeFile = ROOT . '/library/~runtime.php';
 if (!is_file($runtimeFile)) {
     $libraries = array_merge(
         ['Application', 'ControllerAbstract', 'ModelAbstract', 'HookInterface', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
-        ['cache/CacheInterface', 'cache/Memcachedd', 'cache/CacheFactory'],
-        ['database/DatabaseInterface', 'database/Mysqlii', 'database/DatabaseFactory'],
+        ['cache/CacheInterface', 'cache/Memcachedd'],
+        ['database/DatabaseInterface', 'database/Mysqlii'],
         ['exception/ExceptionAbstract', 'exception/StorageException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException']
     );
     $cache = null;

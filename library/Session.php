@@ -18,7 +18,7 @@ final class Session implements \SessionHandlerInterface
      */
     public function __construct()
     {
-        $this->_cacheInstance = CacheFactory::getDriverInstance();
+        $this->_cacheInstance = Application::getInstance()->getCacheInstance();
     }
 
     /**

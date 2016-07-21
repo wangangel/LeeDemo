@@ -18,6 +18,6 @@ abstract class ModelAbstract
      */
     public function __construct()
     {
-        $this->_databaseInstance = DatabaseFactory::getDriverInstance();
+        $this->_databaseInstance = Application::getInstance()->getDatabaseInstance();
     }
 }

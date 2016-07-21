@@ -6,6 +6,8 @@ final class Application
     private $_configInstance = null;
     private $_requestInstance = null;
     private $_responseInstance = null;
+    private $_cacheInstanceArray = [];
+    private $_databaseInstanceArray = [];
     private $_modelInstanceArray = [];
     private $_hookInstanceArray = [];
     public static function getInstance()
@@ -98,6 +100,22 @@ final class Application
     {
         return $this->_responseInstance;
     }
+    public function getCacheInstance($driverName = null)
+    {
+        $driverName = $driverName === null ? ucfirst(C('cache.driver')) : $driverName;
+        if (!isset($this->_cacheInstanceArray[$driverName])) {
+            $this->_cacheInstanceArray[$driverName] = new $driverName();
+        }
+        return $this->_cacheInstanceArray[$driverName];
+    }
+    public function getDatabaseInstance($driverName = null)
+    {
+        $driverName = $driverName === null ? ucfirst(C('database.driver')) : $driverName;
+        if (!isset($this->_databaseInstanceArray[$driverName])) {
+            $this->_databaseInstanceArray[$driverName] = new $driverName();
+        }
+        return $this->_databaseInstanceArray[$driverName];
+    }
     public function getModelInstance($modelName)
     {
         $modelName = ucfirst($modelName) . 'Model';
@@ -128,7 +146,7 @@ abstract class ModelAbstract
     protected $_databaseInstance = null;
     public function __construct()
     {
-        $this->_databaseInstance = DatabaseFactory::getDriverInstance();
+        $this->_databaseInstance = Application::getInstance()->getDatabaseInstance();
     }
 }
 interface HookInterface
@@ -290,7 +308,7 @@ final class Session implements \SessionHandlerInterface
     private $_cacheInstance = null;
     public function __construct()
     {
-        $this->_cacheInstance = CacheFactory::getDriverInstance();
+        $this->_cacheInstance = Application::getInstance()->getCacheInstance();
     }
     public function open($savePath, $sessionName)
     {
@@ -361,18 +379,6 @@ final class Memcachedd implements CacheInterface
     public function set($key, $value, $expiration = 0)
     {
         return $this->_memcachedInstance->set($key, $value, $expiration);
-    }
-}
-final class CacheFactory
-{
-    private static $_driverInstanceArray = [];
-    public static function getDriverInstance($driverName = null)
-    {
-        $driverName = $driverName === null ? ucfirst(C('cache.driver')) : $driverName;
-        if (!isset(self::$_driverInstanceArray[$driverName])) {
-            self::$_driverInstanceArray[$driverName] = new $driverName;
-        }
-        return self::$_driverInstanceArray[$driverName];
     }
 }
 interface DatabaseInterface
@@ -655,18 +661,6 @@ final class Mysqlii implements DatabaseInterface
     {}
     public function commit()
     {}
-}
-final class DatabaseFactory
-{
-    private static $_driverInstanceArray = [];
-    public static function getDriverInstance($driverName = null)
-    {
-        $driverName = $driverName === null ? ucfirst(C('database.driver')) : $driverName;
-        if (!isset(self::$_driverInstanceArray[$driverName])) {
-            self::$_driverInstanceArray[$driverName] = new $driverName();
-        }
-        return self::$_driverInstanceArray[$driverName];
-    }
 }
 class ExceptionAbstract extends \Exception {}
 class StorageException extends ExceptionAbstract

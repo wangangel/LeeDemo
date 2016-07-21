@@ -34,6 +34,16 @@ final class Application
     private $_responseInstance = null;
 
     /**
+     * @var array 缓存驱动对象数组
+     */
+    private $_cacheInstanceArray = [];
+
+    /**
+     * @var array 数据库驱动对象数组
+     */
+    private $_databaseInstanceArray = [];
+
+    /**
      * @var array 模型对象数组
      */
     private $_modelInstanceArray = [];
@@ -218,6 +228,40 @@ final class Application
     public function getResponseInstance()
     {
         return $this->_responseInstance;
+    }
+
+    /**
+     * 获取缓存驱动对象
+     *
+     * @param string $driverName
+     * @return CacheInterface
+     */
+    public function getCacheInstance($driverName = null)
+    {
+        $driverName = $driverName === null ? ucfirst(C('cache.driver')) : $driverName;
+
+        if (!isset($this->_cacheInstanceArray[$driverName])) {
+            $this->_cacheInstanceArray[$driverName] = new $driverName();
+        }
+
+        return $this->_cacheInstanceArray[$driverName];
+    }
+
+    /**
+     * 获取数据库驱动对象
+     *
+     * @param string $driverName
+     * @return DatabaseInterface
+     */
+    public function getDatabaseInstance($driverName = null)
+    {
+        $driverName = $driverName === null ? ucfirst(C('database.driver')) : $driverName;
+
+        if (!isset($this->_databaseInstanceArray[$driverName])) {
+            $this->_databaseInstanceArray[$driverName] = new $driverName();
+        }
+
+        return $this->_databaseInstanceArray[$driverName];
     }
 
     /**
