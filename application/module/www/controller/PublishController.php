@@ -20,8 +20,8 @@ class PublishController extends ControllerAbstract
      */
     public function __construct()
     {
+        // 登录的地方已经做了状态判断，非正常状态的用户信息也不会到 SESSION 中，所以这里不再做状态判断
         if (isset($_SESSION['user'])) {
-            // 理论上登录的地方已经做了状态判断，非正常状态的用户信息也不会到 SESSION 中，所以这里不再做状态判断
             $this->_user = $_SESSION['user'];
         } else {
             throw new HttpException(404, '您尚未登录');
@@ -43,7 +43,8 @@ class PublishController extends ControllerAbstract
      */
     public function postAddSubmitAction()
     {
-
+        $title = I('post', 'title', '', 'htmlspecialchars');
+        $body = I('post', 'body', '', 'htmlspecialchars');
     }
 
     /**
@@ -53,10 +54,22 @@ class PublishController extends ControllerAbstract
     {
         $postId = I('get', 'postId', 0, 'intval');
 
-        $post = Application::getInstance()->getModelInstance('post')->getOwnerById($postId, $this->_user['id']);
+        // 日志
+        $post = Application::getInstance()->getModelInstance('post')->getOwnerById($postId, $this->_user['id'], true);
+        if (is_string($post)) {
+            throw new HttpException(404, $post);
+        }
+
+        // 日志正文
+        $postBody = Application::getInstance()->getModelInstance('postBody')->getByPostId($postId);
+        if ($postBody === null) {
+            throw new HttpException(404, '日志正文丢失');
+        }
+        $post['body'] = $postBody['body'];
 
         return [
-            'user' => $this->_user
+            'user' => $this->_user,
+            'post' => $post
         ];
     }
 

@@ -12,14 +12,7 @@
             <div class="main">
                 <div class="primary">
                     <div id="editor"></div>
-                    <a href="javascript:;">发布</a>
-                    <br>
-                    <br>
-                    <br>
-                    <br>
-                    <br>
-                    <br>
-                    <br>
+                    <a href="javascript:publish.postAdd();">发布</a>
                 </div>
                 <div class="sidebar">
                     123
@@ -28,11 +21,12 @@
         </div>
     </div>
     <script src="/vendor/kindeditor-4.1.11-zh-CN/kindeditor-all-min.js"></script>
+    <script src="/js/custom.js"></script>
     <script>
         KindEditor.ready(function(K) {
             window.editor = K.create('#editor', {
                 width: '700px',
-                height: '500px'
+                height: '300px'
             });
         });
     </script>

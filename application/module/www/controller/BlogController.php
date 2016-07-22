@@ -62,7 +62,7 @@ class BlogController extends ControllerAbstract
 
         // 日志列表
         $postModelInstance = Application::getInstance()->getModelInstance('post');
-        $data = $postModelInstance->getPagedList($page, $this->_user['id'], $categoryId, $postModelInstance->getStatusNormal());
+        $data = $postModelInstance->getPagedList($page, $this->_user['id'], $categoryId, PostModel::STATUS_NORMAL);
 
         // 分类列表
         $categories = $categoryModelInstance->getNormalListByUserId($this->_user['id']);

@@ -28,7 +28,8 @@ final class Request
      *
      * 1、$source 决定了从那个全局变量获取：get / post / request / server / files / env / cookie / session
      * 2、参数 $key 不指定则获取该全局变量下的所有值，并且不会设置 $default 默认值和执行 $filter 操作
-     * 3、参数 $filter 传入的字符串以 / 开头则认为是正则，否则视为方法
+     * 3、参数 $filter 传入的字符串以 / 开头则认为是正则，否则视为方法，多个方法以 | 分割，多个参数以 , 分割，# 代指原值，比如：
+     *      'htmlspecialchars|substr,#,0,6|urlencode' => urlencode(substr(htmlspecialchars($value), 0, 6))
      *
      * @param string $source
      * @param string $key
@@ -57,7 +58,22 @@ final class Request
                         $ret = $default;
                     }
                 } else {
-                    $ret = $filter($ret);
+                    $functions = explode('|', $filter);
+                    $value = null;
+                    foreach ($functions as $func) {
+                        if (strpos($func, ',')) {
+                            $exps = explode(',', $func);
+                            $func = array_shift($exps);
+
+
+                            // todo
+
+
+                        } else {
+                            $value = $func($ret);
+                        }
+                    }
+                    $ret = $value;
                 }
             }
         } else {
