@@ -1,12 +1,12 @@
 <?php
 /**
- * Mysqlii.php
+ * MysqliX.php
  *
  * User: 670554666@qq.com
  * Date: 2016/7/18 9:24
  */
 
-final class Mysqlii implements DatabaseInterface
+final class MysqliX implements DatabaseInterface
 {
     /**
      * @var array 连接句柄数组
@@ -27,7 +27,7 @@ final class Mysqlii implements DatabaseInterface
      */
     public function getConnect($isMaster)
     {
-        $database = C('database');
+        $database = Application::getInstance()->getConfigInstance()->get('database');
 
         if ($isMaster) {
             $config = $database['master'];

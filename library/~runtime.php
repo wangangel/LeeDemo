@@ -33,24 +33,21 @@ final class Application
         if (!class_exists('Bootstrap', false)) {
             throw new UndefinedException('class', 'Bootstrap', '当前应用的初始化类未定义');
         }
-        $obj = new Bootstrap();
-        $methodArr = get_class_methods($obj);
+        $bootstrapInstance = new Bootstrap();
+        $methodArr = get_class_methods($bootstrapInstance);
         foreach ($methodArr as $method) {
             if (substr($method, 0, 5) === '_init') {
-                $obj->$method();
+                $bootstrapInstance->$method();
             }
         }
+        unset($bootstrapInstance);
         return $this;
     }
     public function run()
     {
         if (SESSION_CACHE_ENABLE) {
-            $sessionInstance = new Session();
-            session_set_save_handler($sessionInstance, false);
-        }
-        // 如果开启了 cache 保存 SESSION，则关闭垃圾回收（通过 cache 自身的失效机制）
-        if (SESSION_CACHE_ENABLE) {
             ini_set('session.gc_probability', 0);
+            session_set_save_handler(new Session(), true);
         } else {
             ini_set('session.gc_probability', 1);
         }
@@ -312,21 +309,26 @@ final class Session implements \SessionHandlerInterface
     }
     public function open($savePath, $sessionName)
     {
+        return true;
     }
     public function read($sessionId)
     {
+        return $this->_cacheInstance->get('sess-' . $sessionId);
     }
-    public function write($sessionId , $sessionData)
+    public function write($sessionId, $sessionData)
     {
+        $this->_cacheInstance->set('sess-' . $sessionId, $sessionData, SESSION_CACHE_TIMEOUT);
     }
     public function close()
     {
     }
     public function destroy($sessionId)
     {
+        $this->_cacheInstance->delete('sess-' . $sessionId);
     }
     public function gc($maxLifetime)
     {
+        return false;
     }
 }
 final class View
@@ -355,30 +357,33 @@ interface CacheInterface
     public function get($key);
     public function set($key, $value, $expiration);
 }
-final class Memcachedd implements CacheInterface
+final class MemcacheX implements CacheInterface
 {
-    private $_memcachedInstance = null;
+    private $_memcacheInstance = null;
     public function __construct()
     {
         try {
-            $memcached = new \Memcached();
-            $memcached->addServers(C('cache.servers'));
-            $this->_memcachedInstance = $memcached;
+            $memcached = new \Memcache();
+            $servers = Application::getInstance()->getConfigInstance()->get('cache.servers');
+            foreach ($servers as $server) {
+                $memcached->addServer($server['HOST'], $server['PORT']);
+            }
+            $this->_memcacheInstance = $memcached;
         } catch (\MemcachedException $e) {
             throw new StorageException('memcached', $e->getMessage(), $e->getCode());
         }
     }
     public function get($key)
     {
-        $value = $this->_memcachedInstance->get($key);
-        if ($value === \Memcached::RES_NOTFOUND) {
-            return false;
-        }
-        return $value;
+        return $this->_memcacheInstance->get($key);
     }
     public function set($key, $value, $expiration = 0)
     {
-        return $this->_memcachedInstance->set($key, $value, $expiration);
+        return $this->_memcacheInstance->set($key, $value, MEMCACHE_COMPRESSED, $expiration);
+    }
+    public function delete($key, $timeout = 0)
+    {
+        return $this->_memcacheInstance->delete($key, $timeout);
     }
 }
 interface DatabaseInterface
@@ -402,13 +407,13 @@ interface DatabaseInterface
     public function rollback();
     public function commit();
 }
-final class Mysqlii implements DatabaseInterface
+final class MysqliX implements DatabaseInterface
 {
     private $_connectArray = [];
     private $_data = [];
     public function getConnect($isMaster)
     {
-        $database = C('database');
+        $database = Application::getInstance()->getConfigInstance()->get('database');
         if ($isMaster) {
             $config = $database['master'];
         } else {

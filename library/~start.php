@@ -31,6 +31,7 @@ define('START_TIME', microtime(true));              // 开始执行的时间
 define('START_MEMORY', memory_get_usage(true));     // 开始执行的内存用量
 define('ROOT', dirname(__DIR__));                   // 根目录
 define('SESSION_CACHE_ENABLE', true);               // 是否开启 cache 存储 SESSION
+define('SESSION_CACHE_TIMEOUT', 60*60*24);          // cache 中 SESSION 的失效时间
 
 /**
  * 时区
@@ -58,8 +59,8 @@ $runtimeFile = ROOT . '/library/~runtime.php';
 if (!is_file($runtimeFile)) {
     $libraries = array_merge(
         ['Application', 'ControllerAbstract', 'ModelAbstract', 'HookInterface', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
-        ['cache/CacheInterface', 'cache/Memcachedd'],
-        ['database/DatabaseInterface', 'database/Mysqlii'],
+        ['cache/CacheInterface', 'cache/MemcacheX'],
+        ['database/DatabaseInterface', 'database/MysqliX'],
         ['exception/ExceptionAbstract', 'exception/StorageException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException']
     );
     $cache = null;

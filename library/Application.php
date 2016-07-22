@@ -129,13 +129,8 @@ final class Application
          * 初始化 SESSION
          */
         if (SESSION_CACHE_ENABLE) {
-            $sessionInstance = new Session();
-            session_set_save_handler($sessionInstance, false);
-        }
-
-        // 如果开启了 cache 保存 SESSION，则关闭垃圾回收（通过 cache 自身的失效机制）
-        if (SESSION_CACHE_ENABLE) {
             ini_set('session.gc_probability', 0);
+            session_set_save_handler(new Session(), true);
         } else {
             ini_set('session.gc_probability', 1);
         }

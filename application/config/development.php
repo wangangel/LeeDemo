@@ -10,7 +10,7 @@ return [
     // 数据库配置
     'database' => [
         // 当前驱动
-        'driver' => 'mysqlii',
+        'driver' => 'mysqliX',
 
         // 主库
         'master' => [
@@ -42,7 +42,7 @@ return [
 
     // 缓存配置
     'cache' => [
-        'driver' => 'memcachedd',
+        'driver' => 'memcacheX',
 
         'servers' => [
             [

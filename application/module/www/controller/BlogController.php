@@ -58,6 +58,8 @@ class BlogController extends ControllerAbstract
      */
     public function postListAction()
     {
+        var_dump(Application::getInstance()->getCacheInstance()->get('sess-' . session_id()));
+
         $categoryId = I('get', 'categoryId', 0, 'intval');
         $page = I('get', 'page', 1, 'intval');
 
