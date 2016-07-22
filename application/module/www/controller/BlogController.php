@@ -23,21 +23,10 @@ class BlogController extends ControllerAbstract
         $userId = I('get', 'userId', 0, 'intval');
 
         // 博主
-        $user = M('user')->getById($userId);
-        if (empty($user)) {
-            throw new HttpException(404, '用户不存在');
-        } else {
-            $user = $user[0];
-            $status = intval($user['status']);
-
-            // 博主状态判断
-            if ($status === 0) {
-                throw new HttpException(404, '用户状态异常');
-            } elseif ($status === M('user')->getStatusVerify()) {
-                throw new HttpException(404, '用户正在审核中');
-            } elseif ($status === M('user')->getStatusDelete()) {
-                throw new HttpException(404, '用户已被删除');
-            }
+        $userModelInstance = Application::getInstance()->getModelInstance('user');
+        $user = $userModelInstance->getById($userId, true);
+        if (is_string($user)) {
+            throw new HttpException(404, $user);
         }
 
         $this->_user = $user;
@@ -48,7 +37,7 @@ class BlogController extends ControllerAbstract
      */
     public function indexAction()
     {
-        M('user')->test();
+        // todo
     }
 
     /**
@@ -58,37 +47,25 @@ class BlogController extends ControllerAbstract
      */
     public function postListAction()
     {
-        var_dump(Application::getInstance()->getCacheInstance()->get('sess-' . session_id()));
-
         $categoryId = I('get', 'categoryId', 0, 'intval');
         $page = I('get', 'page', 1, 'intval');
 
-        // 分类有效性判断
+        // 分类
+        $categoryModelInstance = Application::getInstance()->getModelInstance('postCategory');
         $category = [];
         if ($categoryId !== 0) {
-            $category = M('postCategory')->getOwnerById($categoryId, $this->_user['id']);
-            if (empty($category)) {
-                throw new HttpException(404, '该分类不存在');
-            } else {
-                $category = $category[0];
-                $status = intval($category['status']);
-
-                // 分类状态判断
-                if ($status === 0) {
-                    throw new HttpException(404, '分类状态异常');
-                } elseif ($status === M('postCategory')->getStatusVerify()) {
-                    throw new HttpException(404, '分类正在审核中');
-                } elseif ($status === M('postCategory')->getStatusDelete()) {
-                    throw new HttpException(404, '分类已被删除');
-                }
+            $category = $categoryModelInstance->getOwnerById($categoryId, $this->_user['id'], true);
+            if (is_string($category)) {
+                throw new HttpException(404, $category);
             }
         }
 
         // 日志列表
-        $data = M('post')->getPagedList($page, $this->_user['id'], $categoryId, M('post')->getStatusNormal());
+        $postModelInstance = Application::getInstance()->getModelInstance('post');
+        $data = $postModelInstance->getPagedList($page, $this->_user['id'], $categoryId, $postModelInstance->getStatusNormal());
 
-        // 日志分类
-        $categories = M('postCategory')->getNormalListByUserId($this->_user['id']);
+        // 分类列表
+        $categories = $categoryModelInstance->getNormalListByUserId($this->_user['id']);
 
         return [
             'param' => [
@@ -112,29 +89,17 @@ class BlogController extends ControllerAbstract
         $postId = I('get', 'postId', 0, 'intval');
 
         // 日志
-        $post = M('post')->getOwnerById($postId, $this->_user['id']);
-        if (empty($post)) {
-            throw new HttpException(404, '该日志不存在');
-        } else {
-            $post = $post[0];
-            $status = intval($post['status']);
-
-            // 日志状态判断
-            if ($status === 0) {
-                throw new HttpException(404, '日志状态异常');
-            } elseif ($status === 1) {
-                throw new HttpException(404, '日志正在审核中');
-            } elseif ($status === 3) {
-                throw new HttpException(404, '日志已被删除');
-            }
+        $post = Application::getInstance()->getModelInstance('post')->getOwnerById($postId, $this->_user['id'], true);
+        if (is_string($post)) {
+            throw new HttpException(404, $post);
         }
 
         // 日志正文
-        $postBody = M('postBody')->getByPostId($postId);
-        if (empty($postBody)) {
+        $postBody = Application::getInstance()->getModelInstance('postBody')->getByPostId($postId);
+        if ($postBody === null) {
             throw new HttpException(404, '日志正文丢失');
         }
-        $post['body'] = $postBody[0]['body'];
+        $post['body'] = $postBody['body'];
 
         return [
             'user' => $this->_user,

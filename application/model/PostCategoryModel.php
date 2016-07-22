@@ -50,11 +50,12 @@ class PostCategoryModel extends ModelAbstract
      *
      * @param int $categoryId
      * @param int $userId
-     * @return array
+     * @param bool $statusCheck
+     * @return mixed
      */
-    public function getOwnerById($categoryId, $userId)
+    public function getOwnerById($categoryId, $userId, $statusCheck = false)
     {
-        return $this->_databaseInstance
+        $ret = $this->_databaseInstance
             ->table('post_category')
             ->where([
                 'and' => [
@@ -64,10 +65,28 @@ class PostCategoryModel extends ModelAbstract
             ])
             ->limit(1)
             ->select();
+
+        if (empty($ret)) {
+            return '分类不存在';
+        }
+
+        $category = $ret[0];
+        if ($statusCheck) {
+            $status = intval($category['status']);
+            if ($status === 0) {
+                return '分类状态异常';
+            } elseif ($status === self::STATUS_VERIFY) {
+                return '分类正在审核中';
+            } elseif ($status === self::STATUS_DELETE) {
+                return '分类已被删除';
+            }
+        }
+
+        return $category;
     }
 
     /**
-     * 根据 user_id 获取所有正常状态的文章分类
+     * 根据 user_id 获取所有正常状态的分类
      *
      * @param int $userId
      * @return array

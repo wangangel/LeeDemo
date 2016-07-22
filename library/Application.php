@@ -234,7 +234,7 @@ final class Application
      */
     public function getCacheInstance($driverName = null)
     {
-        $driverName = $driverName === null ? ucfirst(C('cache.driver')) : $driverName;
+        $driverName = $driverName === null ? ucfirst(Application::getInstance()->getConfigInstance()->get('cache.driver')) : $driverName;
 
         if (!isset($this->_cacheInstanceArray[$driverName])) {
             $this->_cacheInstanceArray[$driverName] = new $driverName();
@@ -251,7 +251,7 @@ final class Application
      */
     public function getDatabaseInstance($driverName = null)
     {
-        $driverName = $driverName === null ? ucfirst(C('database.driver')) : $driverName;
+        $driverName = $driverName === null ? ucfirst(Application::getInstance()->getConfigInstance()->get('database.driver')) : $driverName;
 
         if (!isset($this->_databaseInstanceArray[$driverName])) {
             $this->_databaseInstanceArray[$driverName] = new $driverName();

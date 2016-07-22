@@ -12,14 +12,20 @@ class PostBodyModel extends ModelAbstract
      * 根据 post_id 获取文章正文
      *
      * @param int $postId
-     * @return array
+     * @return mixed
      */
     public function getByPostId($postId)
     {
-        return $this->_databaseInstance
+        $ret = $this->_databaseInstance
             ->table('post_body')
             ->where('post_id', 'eq', $postId)
             ->limit(1)
             ->select();
+
+        if (empty($ret)) {
+            return null;
+        }
+
+        return $ret[0];
     }
 }

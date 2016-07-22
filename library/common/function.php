@@ -7,32 +7,6 @@
  */
 
 /**
- * 获取配置
- *
- * 使用：C('system') / C('db.master.host')，最多支持到三层
- *
- * @param string $key
- * @return mixed
- */
-function C($key)
-{
-    return Application::getInstance()->getConfigInstance()->get($key);
-}
-
-/**
- * 获取模型对象
- *
- * 使用：M('user') 则创建 UserModel
- *
- * @param string $modelName
- * @return ModelAbstract
- */
-function M($modelName)
-{
-    return Application::getInstance()->getModelInstance($modelName);
-}
-
-/**
  * $_GET / $_POST / $_REQUEST / $_SERVER / $_FILES / $_ENV / $_COOKIE / $_SESSION
  *
  * 1、$source 决定了从那个全局变量获取：get / post / request / server / files / env / cookie / session

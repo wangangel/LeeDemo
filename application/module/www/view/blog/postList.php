@@ -24,12 +24,24 @@
                                     <div class="pl-description">
                                         <p><?php echo $post['description']; ?></p>
                                     </div>
+                                    <div class="pl-info">
+                                        <?php if(isset($_SESSION['user'])): ?>
+                                            <span>
+                                                <a href="/?c=publish&a=postModify&postId=<?php echo $post['id']; ?>">修改</a>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
                     </div>
                 </div>
                 <div class="sidebar">
+                    <?php if(isset($_SESSION['user'])): ?>
+                        <div class="post-publish">
+                            <a href="/?c=publish&a=postAdd">发布日志</a>
+                        </div>
+                    <?php endif; ?>
                     <div class="box">
                         <div class="bx-title">
                             <h3>日志分类</h3>

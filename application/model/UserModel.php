@@ -49,14 +49,33 @@ class UserModel extends ModelAbstract
      * 根据 id 获取用户
      *
      * @param int $userId
-     * @return array
+     * @param bool $statusCheck
+     * @return mixed
      */
-    public function getById($userId)
+    public function getById($userId, $statusCheck = false)
     {
-        return $this->_databaseInstance
+        $ret = $this->_databaseInstance
             ->table('user')
             ->where('id', 'eq', $userId)
             ->limit(1)
             ->select();
+
+        if (empty($ret)) {
+            return '用户不存在';
+        }
+
+        $user = $ret[0];
+        if ($statusCheck) {
+            $status = intval($user['status']);
+            if ($status === 0) {
+                return '用户状态异常';
+            } elseif ($status === self::STATUS_VERIFY) {
+                return '用户正在审核中';
+            } elseif ($status === self::STATUS_DELETE) {
+                return '用户已被删除';
+            }
+        }
+
+        return $user;
     }
 }

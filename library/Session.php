@@ -70,9 +70,15 @@ final class Session implements \SessionHandlerInterface
         $this->_cacheInstance->set('sess-' . $sessionId, $sessionData, SESSION_CACHE_TIMEOUT);
     }
 
+    /**
+     * close 回调函数类似于类的析构函数。在 write 回调函数调用之后调用。
+     * 当调用 session_write_close() 函数之后，也会调用 close 回调函数。此回调函数操作成功返回 TRUE，反之返回 FALSE。
+     *
+     * @return bool
+     */
     public function close()
     {
-
+        return true;
     }
 
     /**

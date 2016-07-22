@@ -46,15 +46,16 @@ class PostModel extends ModelAbstract
     }
 
     /**
-     * 根据 id 获取文章
+     * 根据 id 和 user_id 获取日志
      *
      * @param int $postId
      * @param int $userId
+     * @param bool $statusCheck
      * @return array
      */
-    public function getOwnerById($postId, $userId)
+    public function getOwnerById($postId, $userId, $statusCheck = false)
     {
-        return $this->_databaseInstance
+        $ret = $this->_databaseInstance
             ->table('post')
             ->where([
                 'and' => [
@@ -64,6 +65,24 @@ class PostModel extends ModelAbstract
             ])
             ->limit(1)
             ->select();
+
+        if (empty($ret)) {
+            return '日志不存在';
+        }
+
+        $post = $ret[0];
+        if ($statusCheck) {
+            $status = intval($post['status']);
+            if ($status === 0) {
+                return '日志状态异常';
+            } elseif ($status === self::STATUS_VERIFY) {
+                return '日志正在审核中';
+            } elseif ($status === self::STATUS_DELETE) {
+                return '日志已被删除';
+            }
+        }
+
+        return $post;
     }
 
     /**
@@ -91,7 +110,7 @@ class PostModel extends ModelAbstract
             $where = ['and' => $where];
         }
 
-        $per = C('display.postNumPerPage');
+        $per = Application::getInstance()->getConfigInstance()->get('display.postNumPerPage');
         if (empty($where)) {
             $list = $this->_databaseInstance
                 ->table('post')
