@@ -13,13 +13,11 @@ class IndexController extends ControllerAbstract
      */
     public function indexAction()
     {
-        $sess = Session::getInstance();
-
-        return array(
-            'aaa' => '23432432',
-            'bbb' => 'assdsad',
-            'ccc' => 'dgsdfgfds',
-            'ddd' => 'sdfgfdsggsg'
-        );
+        $_SESSION['user'] = [
+            'id' => 1,
+            'email' => '670554666@qq.com',
+            'nickname' => 'adf',
+            'status' => 2
+        ];
     }
 }

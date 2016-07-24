@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>日志修改</title>
+    <title>修改日志</title>
     <link rel="stylesheet" type="text/css" href="/css/style.css">
 </head>
 <body>
@@ -11,15 +11,15 @@
             <?php include dirname(__DIR__) . '/blog_header.php' ; ?>
             <div class="main">
                 <div class="primary">
-                    <div id="editor"><?php echo $post['body']; ?></div>
-                    <a href="javascript:;">发布</a>
-                    <br>
-                    <br>
-                    <br>
-                    <br>
-                    <br>
-                    <br>
-                    <br>
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input id="title" type="text" value="<?php echo $post['title']; ?>">
+                    </div>
+                    <div class="form-group">
+                        <label>正文</label>
+                        <div id="editor"><?php echo $post['body']; ?></div>
+                    </div>
+                    <a href="javascript:;">修改</a>
                 </div>
                 <div class="sidebar">
                     123

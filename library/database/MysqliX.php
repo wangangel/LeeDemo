@@ -75,8 +75,33 @@ final class MysqliX implements DatabaseInterface
         return $result;
     }
 
+    /**
+     * 执行
+     *
+     * 失败时返回 FALSE，通过 mysqli_query() 成功执行 SELECT, SHOW, DESCRIBE 或 EXPLAIN 查询会返回一个 mysqli_result 对象，其他查询则返回 TRUE
+     *
+     * @param string $sql
+     * @return mixed
+     * @throws StorageException
+     */
     public function execute($sql)
-    {}
+    {
+        $connect = $this->getConnect(true);
+
+        $query = $connect->query($sql);
+        if ($query === false) {
+            // todo: log
+            throw new StorageException('mysqli', 'execute: ' . $sql);
+        }
+
+        if (strpos($sql, 'INSERT') === 0) {
+            return $connect->insert_id;
+        } elseif(strpos($sql, 'UPDATE') === 0) {
+            return $connect->affected_rows > 0;
+        } else {
+            return true;
+        }
+    }
 
     /**
      * 连贯操作：字段
@@ -368,8 +393,29 @@ final class MysqliX implements DatabaseInterface
         return $this->query($sql);
     }
 
+    /**
+     * INSERT
+     *
+     * @param $data
+     * @return int
+     * @throws StorageException
+     */
     public function insert($data)
-    {}
+    {
+        if (!isset($this->_data['table'])) {
+            throw new StorageException('mysqli', 'inser: 缺少表名');
+        }
+
+        $keys = implode(', ', array_keys($data));
+        foreach ($data as $k => $v) {
+            $data[$k] = is_string($v) ? '"' . $v . '"' : $v;
+        }
+        $value = implode(', ', $data);
+
+        $sql = 'INSERT INTO ' . $this->_data['table'] . '(' . $keys . ') VALUES (' . $value . ')';
+
+        return $this->execute($sql);
+    }
 
     public function update($data)
     {}

@@ -79,7 +79,7 @@ final class Application
         }
         $this->_responseInstance->setBody($ret);
         // todo: beforeResponse Hook
-        $this->_responseInstance->response();
+        $this->_responseInstance->output();
     }
     public function disableView()
     {
@@ -207,36 +207,22 @@ final class Request
     private $_method = null;
     private $_controllerName = null;
     private $_actionName = null;
-    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
+    public function getGlobalVariable($source, $key = null, $default = null)
     {
         if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
             return null;
         }
-        $data = $GLOBALS['_' . strtoupper($source)];
+        $data = null;
+        eval('$data = $_' . strtoupper($source) . ';');
         if ($key === null) {
             return $data;
         }
-        $ret = null;
-        if(isset($data[$key])){
-            $ret = $data[$key];
-            if ($filter !== null) {
-                if (substr($filter, 0, 1) === '/') {
-                    if (!preg_match($filter, $ret)) {
-                        $ret = $default;
-                    }
-                } else {
-                    $ret = $filter($ret);
-                }
-            }
-        } else {
-            $ret = $default;
-        }
-        return $ret;
+        return isset($data[$key]) ? $data[$key] : $default;
     }
     public function getMethod()
     {
         if ($this->_method === null) {
-            $method = $this->getGlobalServer('REQUEST_METHOD');
+            $method = $this->getGlobalVariable('server', 'REQUEST_METHOD');
             if ($method) {
                 $this->_method = strtoupper($method);
             } else {
@@ -253,6 +239,10 @@ final class Request
     public function isCli()
     {
         return $this->getMethod() === 'CLI';
+    }
+    public function isAjax()
+    {
+        return strtolower($this->getGlobalVariable('server', 'HTTP_X_REQUESTED_WITH')) === 'ajax';
     }
     public function setControllerName($controllerName)
     {
@@ -284,9 +274,20 @@ final class Response
     {
         return $this->_body;
     }
-    public function response()
+    public function output()
     {
-        echo $this->getBody();
+        $isAjax = Application::getInstance()->getRequestInstance()->isAjax();
+        $output = null;
+        if ($isAjax) {
+            $output = json_encode([
+                'status' => true,
+                'code' => '',
+                'data' => $this->getBody()
+            ]);
+        } else {
+            $output = $this->getBody();
+        }
+        exit($output);
     }
 }
 final class Router
@@ -295,8 +296,10 @@ final class Router
     const DEFAULT_ACTION_NAME = 'index';
     public function route()
     {
-        $controllerName = I('get', 'c', self::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
-        $actionName = I('get', 'a', self::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
+        $controllerName = I('get', 'c', self::DEFAULT_CONTROLLER_NAME);
+        $actionName = I('get', 'a', self::DEFAULT_ACTION_NAME);
+        $controllerName = preg_match('/^[a-z]+$/', $controllerName) ? $controllerName : self::DEFAULT_CONTROLLER_NAME;
+        $actionName = preg_match('/^[a-zA-Z]+$/', $actionName) ? $actionName : self::DEFAULT_ACTION_NAME;
         Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
     }
 }
@@ -448,7 +451,21 @@ final class MysqliX implements DatabaseInterface
         return $result;
     }
     public function execute($sql)
-    {}
+    {
+        $connect = $this->getConnect(true);
+        $query = $connect->query($sql);
+        if ($query === false) {
+            // todo: log
+            throw new StorageException('mysqli', 'execute: ' . $sql);
+        }
+        if (strpos($sql, 'INSERT') === 0) {
+            return $connect->insert_id;
+        } elseif(strpos($sql, 'UPDATE') === 0) {
+            return $connect->affected_rows > 0;
+        } else {
+            return true;
+        }
+    }
     public function field()
     {
         $args = func_get_args();
@@ -656,7 +673,18 @@ final class MysqliX implements DatabaseInterface
         return $this->query($sql);
     }
     public function insert($data)
-    {}
+    {
+        if (!isset($this->_data['table'])) {
+            throw new StorageException('mysqli', 'inser: 缺少表名');
+        }
+        $keys = implode(', ', array_keys($data));
+        foreach ($data as $k => $v) {
+            $data[$k] = is_string($v) ? '"' . $v . '"' : $v;
+        }
+        $value = implode(', ', $data);
+        $sql = 'INSERT INTO ' . $this->_data['table'] . '(' . $keys . ') VALUES (' . $value . ')';
+        return $this->execute($sql);
+    }
     public function update($data)
     {}
     public function delete()

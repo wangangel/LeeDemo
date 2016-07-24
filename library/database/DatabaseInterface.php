@@ -38,7 +38,7 @@ interface DatabaseInterface
      * 虽然不建议这么做，但是你也可以直接调用此方法来执行原生的 sql，主要是解决一些连贯操作无法实现的复杂 sql
      *
      * @param string $sql
-     * @return int
+     * @return mixed
      */
     public function execute($sql);
 

@@ -28,59 +28,26 @@ final class Request
      *
      * 1、$source 决定了从那个全局变量获取：get / post / request / server / files / env / cookie / session
      * 2、参数 $key 不指定则获取该全局变量下的所有值，并且不会设置 $default 默认值和执行 $filter 操作
-     * 3、参数 $filter 传入的字符串以 / 开头则认为是正则，否则视为方法，多个方法以 | 分割，多个参数以 , 分割，# 代指原值，比如：
-     *      'htmlspecialchars|substr,#,0,6|urlencode' => urlencode(substr(htmlspecialchars($value), 0, 6))
      *
      * @param string $source
      * @param string $key
      * @param mixed $default
-     * @param string $filter
      * @return mixed
      */
-    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
+    public function getGlobalVariable($source, $key = null, $default = null)
     {
         if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
             return null;
         }
 
-        $data = $GLOBALS['_' . strtoupper($source)];
+        $data = null;
+        eval('$data = $_' . strtoupper($source) . ';');
 
         if ($key === null) {
             return $data;
         }
 
-        $ret = null;
-        if(isset($data[$key])){
-            $ret = $data[$key];
-            if ($filter !== null) {
-                if (substr($filter, 0, 1) === '/') {
-                    if (!preg_match($filter, $ret)) {
-                        $ret = $default;
-                    }
-                } else {
-                    $functions = explode('|', $filter);
-                    $value = null;
-                    foreach ($functions as $func) {
-                        if (strpos($func, ',')) {
-                            $exps = explode(',', $func);
-                            $func = array_shift($exps);
-
-
-                            // todo
-
-
-                        } else {
-                            $value = $func($ret);
-                        }
-                    }
-                    $ret = $value;
-                }
-            }
-        } else {
-            $ret = $default;
-        }
-
-        return $ret;
+        return isset($data[$key]) ? $data[$key] : $default;
     }
 
     /**
@@ -93,7 +60,7 @@ final class Request
     public function getMethod()
     {
         if ($this->_method === null) {
-            $method = $this->getGlobalServer('REQUEST_METHOD');
+            $method = $this->getGlobalVariable('server', 'REQUEST_METHOD');
             if ($method) {
                 $this->_method = strtoupper($method);
             } else {
@@ -117,6 +84,16 @@ final class Request
     public function isCli()
     {
         return $this->getMethod() === 'CLI';
+    }
+
+    /**
+     * 是否是 ajax 请求
+     *
+     * @return bool
+     */
+    public function isAjax()
+    {
+        return strtolower($this->getGlobalVariable('server', 'HTTP_X_REQUESTED_WITH')) === 'ajax';
     }
 
     /**

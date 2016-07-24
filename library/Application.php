@@ -185,7 +185,7 @@ final class Application
         /**
          * 执行响应
          */
-        $this->_responseInstance->response();
+        $this->_responseInstance->output();
     }
 
     /**

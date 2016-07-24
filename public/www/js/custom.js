@@ -26,15 +26,16 @@ function ajax(method, url, postData, callbackFunc, callbackEle) {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
                 if (callbackFunc) {
-                    callbackFunc(xhr.responseText, callbackEle);
+                    callbackFunc(xhr.responseText, callbackEle || null);
                 }
             } else {
                 if (callbackFunc) {
-                    callbackFunc(null, callbackEle);
+                    callbackFunc(null, callbackEle || null);
                 }
             }
         }
     };
+    xhr.setRequestHeader('X-Requested-With', 'ajax');
     if (method.toLowerCase() === 'post') {
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     }
@@ -45,7 +46,13 @@ function ajax(method, url, postData, callbackFunc, callbackEle) {
 var publish = {
     postAdd: function() {
         KindEditor.sync('#editor');
-        var content = $('#editor').innerHTML;
-        alert(content);
+        ajax(
+            'post',
+            '/?c=publish&a=postAddSubmit',
+            'title=' + $('#title').value + '&body=' + $('#editor').innerHTML,
+            function(data) {
+                console.log(data);
+            }
+        );
     }
 };

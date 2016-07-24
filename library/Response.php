@@ -36,8 +36,21 @@ final class Response
     /**
      * 执行响应
      */
-    public function response()
+    public function output()
     {
-        echo $this->getBody();
+        $isAjax = Application::getInstance()->getRequestInstance()->isAjax();
+
+        $output = null;
+        if ($isAjax) {
+            $output = json_encode([
+                'status' => true,
+                'code' => '',
+                'data' => $this->getBody()
+            ]);
+        } else {
+            $output = $this->getBody();
+        }
+
+        exit($output);
     }
 }

@@ -23,8 +23,11 @@ final class Router
      */
     public function route()
     {
-        $controllerName = I('get', 'c', self::DEFAULT_CONTROLLER_NAME, '/^[a-z]+$/');
-        $actionName = I('get', 'a', self::DEFAULT_ACTION_NAME, '/^[a-zA-Z]+$/');
+        $controllerName = I('get', 'c', self::DEFAULT_CONTROLLER_NAME);
+        $actionName = I('get', 'a', self::DEFAULT_ACTION_NAME);
+
+        $controllerName = preg_match('/^[a-z]+$/', $controllerName) ? $controllerName : self::DEFAULT_CONTROLLER_NAME;
+        $actionName = preg_match('/^[a-zA-Z]+$/', $actionName) ? $actionName : self::DEFAULT_ACTION_NAME;
 
         Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
     }

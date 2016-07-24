@@ -11,7 +11,14 @@
             <?php include dirname(__DIR__) . '/blog_header.php' ; ?>
             <div class="main">
                 <div class="primary">
-                    <div id="editor"></div>
+                    <div class="form-group">
+                        <label>标题</label>
+                        <input id="title" type="text">
+                    </div>
+                    <div class="form-group">
+                        <label>正文</label>
+                        <div id="editor"></div>
+                    </div>
                     <a href="javascript:publish.postAdd();">发布</a>
                 </div>
                 <div class="sidebar">

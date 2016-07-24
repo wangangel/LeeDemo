@@ -103,4 +103,15 @@ class PostModel extends ModelAbstract
             'pagenavi' => $pagenavi
         ];
     }
+
+    /**
+     * 添加一条记录
+     *
+     * @param array $data
+     * @return int
+     */
+    public function addOne($data)
+    {
+        return $this->_databaseInstance->table('post')->insert($data);
+    }
 }

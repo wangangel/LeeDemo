@@ -43,8 +43,30 @@ class PublishController extends ControllerAbstract
      */
     public function postAddSubmitAction()
     {
-        $title = I('post', 'title', '', 'htmlspecialchars');
-        $body = I('post', 'body', '', 'htmlspecialchars');
+        Application::getInstance()->disableView();
+
+        $title = I('post', 'title', null);
+        $body = I('post', 'body', null);
+
+        if (empty($title) || empty($body)) {
+            throw new HttpException(404, '内容不完整');
+        }
+
+        // 安全处理
+        $title = substr(htmlspecialchars($title), 0, 100);
+        $body = htmlspecialchars($body);
+
+        // post
+        $postId = Application::getInstance()->getModelInstance('post')->addOne([
+            'user_id' => $this->_user['id'],
+            'title' => $title
+        ]);
+
+        // todo: post_body
+
+        return [
+            'postId' => $postId
+        ];
     }
 
     /**
@@ -78,6 +100,6 @@ class PublishController extends ControllerAbstract
      */
     public function postModifySubmitAction()
     {
-
+        // todo
     }
 }
