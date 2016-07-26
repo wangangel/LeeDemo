@@ -85,13 +85,13 @@ require $runtimeFile;
 try {
     Application::getInstance()->bootstrap()->run();
 } catch (\Exception $e) {
-    $header = '<h3>' . $e->getMessage() . '</h3>';
-
-    $list = null;
-    foreach ($e->getTrace() as $trace) {
-        $list .= '<li>[line ' . $trace['line'] . '] ' . $trace['file'] . ' (' . (isset($trace['class']) ? $trace['function'] . '/' : '') . $trace['function'] . ')</li>';
+    if (Application::getInstance()->getRequestInstance()->isAjax()) {
+        exit(json_encode(array(
+            'status' => false,
+            'code' => $e->getMessage(),
+            'data' => ''
+        )));
+    } else {
+        exit('<ul><li><h3>' . $e->getMessage() . '</h3>' . str_replace('#', '</li><li>#', $e->getTraceAsString()) . '</li></ul>');
     }
-    $list = '<ul>' . $list . '</ul>';
-
-    exit($header . $list);
 }

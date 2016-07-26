@@ -24,7 +24,7 @@ class PublishController extends ControllerAbstract
         if (isset($_SESSION['user'])) {
             $this->_user = $_SESSION['user'];
         } else {
-            throw new HttpException(404, '您尚未登录');
+            throw new HttpException(404, '尚未登录');
         }
     }
 
@@ -33,8 +33,12 @@ class PublishController extends ControllerAbstract
      */
     public function postAddAction()
     {
+        // 分类列表
+        $categories = Application::getInstance()->getModelInstance('postCategory')->getNormalListByUserId($this->_user['id']);
+
         return [
-            'user' => $this->_user
+            'user' => $this->_user,
+            'categories' => $categories
         ];
     }
 
@@ -45,24 +49,31 @@ class PublishController extends ControllerAbstract
     {
         Application::getInstance()->disableView();
 
-        $title = I('post', 'title', null);
-        $body = I('post', 'body', null);
+        $title = I('post', 'title', '', 'trim');
+        $categoryId = I('post', 'categoryId', 0, 'intval');
+        $body = I('post', 'body', '', 'trim');
 
-        if (empty($title) || empty($body)) {
-            throw new HttpException(404, '内容不完整');
+        // 有效性判断
+        if (empty($title)) {
+            throw new HttpException(404, '标题未填写');
+        }
+        if (empty($body)) {
+            throw new HttpException(404, '正文未填写');
+        }
+        $category = Application::getInstance()->getModelInstance('postCategory')->getOwnerById($categoryId, $this->_user['id'], true);
+        if (is_string($category)) {
+            throw new HttpException(404, $category);
         }
 
-        // 安全处理
-        $title = substr(htmlspecialchars($title), 0, 100);
-        $body = htmlspecialchars($body);
+        // 数据处理
+        $title = substr(htmlspecialchars($title, ENT_QUOTES), 0, 100);
+        $body = htmlspecialchars($body, ENT_QUOTES);
 
-        // post
-        $postId = Application::getInstance()->getModelInstance('post')->addOne([
-            'user_id' => $this->_user['id'],
-            'title' => $title
-        ]);
-
-        // todo: post_body
+        // 发布日志
+        $postId = Application::getInstance()->getModelInstance('post')->publish($categoryId, $this->_user['id'], $title, $body);
+        if ($postId === false) {
+            throw new HttpException(404, '日志发布失败');
+        }
 
         return [
             'postId' => $postId

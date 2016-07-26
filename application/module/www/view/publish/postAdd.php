@@ -12,11 +12,20 @@
             <div class="main">
                 <div class="primary">
                     <div class="form-group">
-                        <label>标题</label>
+                        <label>日志标题</label>
                         <input id="title" type="text">
                     </div>
                     <div class="form-group">
-                        <label>正文</label>
+                        <label>选择分类</label>
+                        <select id="category">
+                            <option value="0">--- 请选择 ---</option>
+                            <?php foreach($categories as $category): ?>
+                                <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>日志正文</label>
                         <div id="editor"></div>
                     </div>
                     <a href="javascript:publish.postAdd();">发布</a>

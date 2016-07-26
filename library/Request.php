@@ -32,9 +32,10 @@ final class Request
      * @param string $source
      * @param string $key
      * @param mixed $default
+     * @param mixed $filter
      * @return mixed
      */
-    public function getGlobalVariable($source, $key = null, $default = null)
+    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
     {
         if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
             return null;
@@ -47,7 +48,12 @@ final class Request
             return $data;
         }
 
-        return isset($data[$key]) ? $data[$key] : $default;
+        $value = isset($data[$key]) ? $data[$key] : $default;
+        if ($filter !== null) {
+            $value = call_user_func($filter, $value);
+        }
+
+        return $value;
     }
 
     /**

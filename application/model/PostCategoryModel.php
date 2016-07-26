@@ -36,6 +36,9 @@ class PostCategoryModel extends ModelAbstract
             ->limit(1)
             ->select();
 
+        if ($ret === false) {
+            return '分类查询异常';
+        }
         if (empty($ret)) {
             return '分类不存在';
         }
@@ -59,7 +62,7 @@ class PostCategoryModel extends ModelAbstract
      * 根据 user_id 获取所有正常状态的分类
      *
      * @param int $userId
-     * @return array
+     * @return mixed
      */
     public function getNormalListByUserId($userId)
     {
@@ -73,5 +76,30 @@ class PostCategoryModel extends ModelAbstract
             ])
             ->order('id', 'asc')
             ->select();
+    }
+
+    /**
+     * 更新文章计数
+     *
+     * @param int $categoryId
+     * @param int $userId
+     * @param int $count
+     * @param int $countNormal
+     * @return bool
+     */
+    public function updateOwnerPostCount($categoryId, $userId, $count = 0, $countNormal = 0)
+    {
+        return $this->_databaseInstance
+            ->table('post_category')
+            ->where([
+                'and' => [
+                    ['id', 'eq', $categoryId],
+                    ['user_id', 'eq', $userId]
+                ]
+            ])
+            ->update([
+                'count_post' => '+ ' . $count,
+                'count_normal_post' => '+ ' . $countNormal
+            ]);
     }
 }

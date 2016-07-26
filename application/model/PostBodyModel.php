@@ -22,10 +22,30 @@ class PostBodyModel extends ModelAbstract
             ->limit(1)
             ->select();
 
+        if ($ret === false) {
+            return '日志正文查询异常';
+        }
         if (empty($ret)) {
-            return null;
+            return '日志正文丢失';
         }
 
         return $ret[0];
+    }
+
+    /**
+     * 插入一条记录
+     *
+     * @param int $postId
+     * @param string $body
+     * @return int
+     */
+    public function addOne($postId, $body)
+    {
+        return $this->_databaseInstance
+            ->table('post_body')
+            ->insert([
+                'post_id' => $postId,
+                'body' => $body
+            ]);
     }
 }

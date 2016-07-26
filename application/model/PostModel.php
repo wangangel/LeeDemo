@@ -9,11 +9,12 @@
 class PostModel extends ModelAbstract
 {
     /**
-     * 文章状态
+     * 日志状态
      */
     const STATUS_VERIFY = 1;    // 待审核
     const STATUS_NORMAL = 2;    // 正常
-    const STATUS_DELETE = 3;    // 已删除
+    const STATUS_RECYCLE = 3;   // 回收站
+    const STATUS_DELETE = 4;    // 已删除
 
     /**
      * 根据 id 和 user_id 获取日志
@@ -36,6 +37,9 @@ class PostModel extends ModelAbstract
             ->limit(1)
             ->select();
 
+        if ($ret === false) {
+            return '日志查询异常';
+        }
         if (empty($ret)) {
             return '日志不存在';
         }
@@ -45,6 +49,8 @@ class PostModel extends ModelAbstract
             $status = intval($post['status']);
             if ($status === self::STATUS_VERIFY) {
                 return '日志正在审核中';
+            } elseif ($status === self::STATUS_RECYCLE) {
+                return '日志在回收站';
             } elseif ($status === self::STATUS_DELETE) {
                 return '日志已被删除';
             } elseif ($status !== self::STATUS_NORMAL) {
@@ -62,7 +68,7 @@ class PostModel extends ModelAbstract
      * @param int $userId
      * @param int $categoryId
      * @param int $status
-     * @return array
+     * @return mixed
      */
     public function getPagedList($page, $userId = 0, $categoryId = 0, $status = 0)
     {
@@ -95,6 +101,9 @@ class PostModel extends ModelAbstract
                 ->limit(($page - 1) * $per, $per)
                 ->select();
         }
+        if ($list === false) {
+            return false;
+        }
 
         $pagenavi = '';
 
@@ -105,13 +114,68 @@ class PostModel extends ModelAbstract
     }
 
     /**
-     * 添加一条记录
+     * 插入一条记录
      *
-     * @param array $data
+     * @param int $categoryId
+     * @param int $userId
+     * @param string $title
+     * @param string $description
      * @return int
      */
-    public function addOne($data)
+    public function addOne($categoryId, $userId, $title, $description)
     {
-        return $this->_databaseInstance->table('post')->insert($data);
+        return $this->_databaseInstance
+            ->table('post')
+            ->insert([
+                'category_id' => $categoryId,
+                'user_id' => $userId,
+                'title' => $title,
+                'description' => $description,
+                'status' => 2,
+                'time_add' => time()
+            ]);
+    }
+
+    /**
+     * 发布一篇日志
+     *
+     * 涉及到 post / post_body / post_category
+     *
+     * @param int $categoryId
+     * @param int $userId
+     * @param string $title
+     * @param string $body
+     * @return mixed
+     */
+    public function publish($categoryId, $userId, $title, $body)
+    {
+        // 开启事务
+        $this->_databaseInstance->startTrans();
+
+        // todo: 敏感词检查
+
+        // 插入 post
+        $postId = $this->addOne($categoryId, $userId, $title, substr($body, 0, 250));
+        if ($postId === false) {
+            return false;
+        }
+
+        // 插入 post_body
+        $postBodyId = Application::getInstance()->getModelInstance('postBody')->addOne($postId, $body);
+        if ($postBodyId === false) {
+            $this->_databaseInstance->rollback();
+            return false;
+        }
+
+        // 更新 post_category 计数
+        $update = Application::getInstance()->getModelInstance('postCategory')->updateOwnerPostCount($categoryId, $userId, 1, 1);
+        if ($update === false) {
+            $this->_databaseInstance->rollback();
+            return false;
+        } else {
+            $this->_databaseInstance->commit();
+        }
+
+        return $postId;
     }
 }

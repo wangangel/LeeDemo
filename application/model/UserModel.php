@@ -30,6 +30,9 @@ class UserModel extends ModelAbstract
             ->limit(1)
             ->select();
 
+        if ($ret === false) {
+            return '用户查询异常';
+        }
         if (empty($ret)) {
             return '用户不存在';
         }

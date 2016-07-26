@@ -23,8 +23,7 @@ class BlogController extends ControllerAbstract
         $userId = I('get', 'userId', 0, 'intval');
 
         // 博主
-        $userModelInstance = Application::getInstance()->getModelInstance('user');
-        $user = $userModelInstance->getById($userId, true);
+        $user = Application::getInstance()->getModelInstance('user')->getById($userId, true);
         if (is_string($user)) {
             throw new HttpException(404, $user);
         }
@@ -50,7 +49,7 @@ class BlogController extends ControllerAbstract
         $categoryId = I('get', 'categoryId', 0, 'intval');
         $page = I('get', 'page', 1, 'intval');
 
-        // 分类
+        // 当前分类
         $categoryModelInstance = Application::getInstance()->getModelInstance('postCategory');
         $category = [];
         if ($categoryId !== 0) {
@@ -61,11 +60,16 @@ class BlogController extends ControllerAbstract
         }
 
         // 日志列表
-        $postModelInstance = Application::getInstance()->getModelInstance('post');
-        $data = $postModelInstance->getPagedList($page, $this->_user['id'], $categoryId, PostModel::STATUS_NORMAL);
+        $data = Application::getInstance()->getModelInstance('post')->getPagedList($page, $this->_user['id'], $categoryId, PostModel::STATUS_NORMAL);
+        if ($data === false) {
+            throw new HttpException(404, '日志列表获取失败');
+        }
 
         // 分类列表
-        $categories = $categoryModelInstance->getNormalListByUserId($this->_user['id']);
+        $categoryList = $categoryModelInstance->getNormalListByUserId($this->_user['id']);
+        if ($categoryList === false) {
+            throw new HttpException(404, '分类列表获取失败');
+        }
 
         return [
             'param' => [
@@ -73,9 +77,9 @@ class BlogController extends ControllerAbstract
               'page' => $page
             ],
             'user' => $this->_user,
+            'category' => $category,
             'data' => $data,
-            'categories' => $categories,
-            'category' => $category
+            'categoryList' => $categoryList
         ];
     }
 
@@ -96,8 +100,8 @@ class BlogController extends ControllerAbstract
 
         // 日志正文
         $postBody = Application::getInstance()->getModelInstance('postBody')->getByPostId($postId);
-        if ($postBody === null) {
-            throw new HttpException(404, '日志正文丢失');
+        if (is_string($postBody)) {
+            throw new HttpException(404, $postBody);
         }
         $post['body'] = $postBody['body'];
 

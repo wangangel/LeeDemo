@@ -23,10 +23,12 @@ interface DatabaseInterface
      *
      * 将 select 引导到这里，强制走从库
      *
+     * 失败时不抛异常，而是返回 false，主要是为了配合事务的回滚
+     *
      * 虽然不建议这么做，但是你也可以直接调用此方法来查询原生的 sql，主要是解决一些连贯操作无法实现的复杂 sql
      *
      * @param string $sql
-     * @return array
+     * @return mixed
      */
     public function query($sql);
 
@@ -34,6 +36,8 @@ interface DatabaseInterface
      * 执行
      *
      * 将 update / insert / delete 引导到这里，强制走主库
+     *
+     * 失败时不抛异常，而是返回 false，主要是为了配合事务的回滚
      *
      * 虽然不建议这么做，但是你也可以直接调用此方法来执行原生的 sql，主要是解决一些连贯操作无法实现的复杂 sql
      *
@@ -154,7 +158,7 @@ interface DatabaseInterface
     /**
      * UPDATE
      *
-     * update(['name' => 'aaa', 'sex' => 2, 'age' => 22])
+     * update(['name' => 'aaa', 'sex' => 2, 'age' => 22]) / update(['count_normal' => '+2'])
      *
      * @param array $data
      * @return bool

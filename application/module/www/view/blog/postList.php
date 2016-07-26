@@ -48,7 +48,7 @@
                         </div>
                         <div class="bx-body">
                             <ul>
-                                <?php foreach($categories as $category): ?>
+                                <?php foreach($categoryList as $category): ?>
                                     <li><a href="/?c=blog&a=postList&userId=<?php echo $user['id']; ?>&categoryId=<?php echo $category['id']; ?>"><?php echo $category['name']; ?></a><em>(<?php echo $category['count_normal_post']; ?>)</em></li>
                                 <?php endforeach; ?>
                             </ul>

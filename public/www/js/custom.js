@@ -42,6 +42,12 @@ function ajax(method, url, postData, callbackFunc, callbackEle) {
     xhr.send(postData);
 }
 
+// post & +
+function postEscape(data)
+{
+    return data.replace(/\&/g, '%26').replace(/\+/g, '%2B');
+}
+
 // publish
 var publish = {
     postAdd: function() {
@@ -49,9 +55,14 @@ var publish = {
         ajax(
             'post',
             '/?c=publish&a=postAddSubmit',
-            'title=' + $('#title').value + '&body=' + $('#editor').innerHTML,
+            'title=' + postEscape($('#title').value) + '&categoryId=' + $('#category').value + '&body=' + postEscape($('#editor').innerHTML),
             function(data) {
-                console.log(data);
+                var json = eval('(' + data + ')');
+                if (json.status === false) {
+                    alert(json.code);
+                } else {
+                    alert('发布成功');
+                }
             }
         );
     }

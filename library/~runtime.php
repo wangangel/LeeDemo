@@ -207,7 +207,7 @@ final class Request
     private $_method = null;
     private $_controllerName = null;
     private $_actionName = null;
-    public function getGlobalVariable($source, $key = null, $default = null)
+    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
     {
         if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
             return null;
@@ -217,7 +217,11 @@ final class Request
         if ($key === null) {
             return $data;
         }
-        return isset($data[$key]) ? $data[$key] : $default;
+        $value = isset($data[$key]) ? $data[$key] : $default;
+        if ($filter !== null) {
+            $value = call_user_func($filter, $value);
+        }
+        return $value;
     }
     public function getMethod()
     {
@@ -418,13 +422,11 @@ final class MysqliX implements DatabaseInterface
     public function getConnect($isMaster)
     {
         $database = Application::getInstance()->getConfigInstance()->get('database');
-        if ($isMaster) {
-            $config = $database['master'];
-        } else {
-            $config = $database['slaves'][mt_rand(0, count($database['slaves']) - 1)];
-        }
+        // 选取配置
+        $config = $isMaster ? $database['master'] : $database['slaves'][mt_rand(0, count($database['slaves']) - 1)];
         // 一种配置对应一个连接
         $key = md5(implode('', $config));
+        // connect
         if (!isset($this->_connectArray[$key])) {
             $connect = new \Mysqli($config['host'], $config['username'], $config['password'], $config['dbname']);
             $connect->query('SET NAMES ' . $config['charset']);
@@ -440,12 +442,12 @@ final class MysqliX implements DatabaseInterface
         $query = $this->getConnect(false)->query($sql);
         if ($query === false) {
             // todo: log
-            throw new StorageException('mysqli', 'query: ' . $sql);
+            return false;
         }
         $result = [];
         if ($query->num_rows > 0) {
             for ($i = 0; $i < $query->num_rows; $i++) {
-                $result[$i] = $query->fetch_assoc();
+                $result[] = $query->fetch_assoc();
             }
         }
         return $result;
@@ -456,7 +458,7 @@ final class MysqliX implements DatabaseInterface
         $query = $connect->query($sql);
         if ($query === false) {
             // todo: log
-            throw new StorageException('mysqli', 'execute: ' . $sql);
+            return false;
         }
         if (strpos($sql, 'INSERT') === 0) {
             return $connect->insert_id;
@@ -469,15 +471,10 @@ final class MysqliX implements DatabaseInterface
     public function field()
     {
         $args = func_get_args();
-        $num = func_num_args();
+        $argNum = func_num_args();
         $field = null;
-        if ($num === 0) {
+        if ($argNum === 0) {
             $field = '*';
-        } elseif ($num === 1) {
-            if (!is_string($args[0])) {
-                throw new StorageException('mysqli', 'field: 无效的参数');
-            }
-            $field = $args[0] === '*' ? '*' : $args[0];
         } else {
             $array = [];
             foreach ($args as $arg) {
@@ -485,8 +482,6 @@ final class MysqliX implements DatabaseInterface
                     $array[] = $arg;
                 } elseif (is_array($arg)) {
                     $array[] = array_keys($arg)[0] . ' AS ' . $arg[array_keys($arg)[0]];
-                } else {
-                    throw new StorageException('mysqli', 'field: 无效的参数');
                 }
             }
             $field = implode(', ', $array);
@@ -496,51 +491,22 @@ final class MysqliX implements DatabaseInterface
     }
     public function table($tableName)
     {
-        if (empty($tableName)) {
-            throw new StorageException('mysqli', 'table: 缺少参数 -> $tableName');
-        }
         $table = null;
         if (is_string($tableName)) {
             $table = $tableName;
         } elseif (is_array($tableName)) {
             $table = array_keys($tableName)[0] . ' AS ' . $tableName[array_keys($tableName)[0]];
-        } else {
-            throw new StorageException('mysqli', 'table: 无效的参数 -> $tableName');
         }
         $this->_data['table'] = $table;
         return $this;
     }
     public function join($way, $tableName, $leftField, $rightField)
     {
-        $allowWays = ['inner', 'left', 'left outer', 'right', 'right outer', 'full', 'full outer'];
-        if (!in_array(strtolower($way), $allowWays)) {
-            throw new StorageException('mysqli', 'join: 无效的参数 -> $way');
-        }
         $table = null;
-        if (empty($tableName)) {
-            throw new StorageException('mysqli', 'join: 缺少参数 -> $tableName');
-        } else {
-            if (is_string($tableName)) {
-                $table = $tableName;
-            } elseif (is_array($tableName)) {
-                $table = array_keys($tableName)[0] . ' AS ' . $tableName[array_keys($tableName)[0]];
-            } else {
-                throw new StorageException('mysqli', 'join: 无效的参数 -> $tableName');
-            }
-        }
-        if (empty($leftField)) {
-            throw new StorageException('mysqli', 'join: 缺少参数 -> $leftField');
-        } else {
-            if (!is_string($leftField)) {
-                throw new StorageException('mysqli', 'join: 无效的参数 -> $leftField');
-            }
-        }
-        if (empty($rightField)) {
-            throw new StorageException('mysqli', 'join: 缺少参数 -> $rightField');
-        } else {
-            if (!is_string($rightField)) {
-                throw new StorageException('mysqli', 'join: 无效的参数 -> $rightField');
-            }
+        if (is_string($tableName)) {
+            $table = $tableName;
+        } elseif (is_array($tableName)) {
+            $table = array_keys($tableName)[0] . ' AS ' . $tableName[array_keys($tableName)[0]];
         }
         $join = ' ' . strtoupper($way) . ' JOIN ' . $table . ' ON ' . $leftField . ' = ' . $rightField;
         if (isset($this->_data['join'])) {
@@ -553,10 +519,10 @@ final class MysqliX implements DatabaseInterface
     public function where()
     {
         $args = func_get_args();
-        $num = func_num_args();
+        $argNum = func_num_args();
         $where = null;
-        if ($num > 0) {
-            if ($num === 1) {
+        if ($argNum > 0) {
+            if ($argNum === 1) {
                 $linkWord = array_keys($args[0])[0];
                 $array = [];
                 foreach ($args[0][$linkWord] as $k => $v) {
@@ -571,28 +537,17 @@ final class MysqliX implements DatabaseInterface
                     }
                 }
                 $where = implode(' ' . strtoupper($linkWord) . ' ', $array);
-            } elseif ($num === 3) {
+            } elseif ($argNum === 3) {
                 $where = $this->_parseWhere($args[0], $args[1], $args[2]);
-            } else {
-                throw new StorageException('mysqli', 'where: 无效的参数');
             }
-        } else {
-            throw new StorageException('mysqli', 'where: 缺少参数');
         }
         $this->_data['where'] = ' WHERE ' . $where;
         return $this;
     }
     private function _parseWhere($field, $condition, $value)
     {
-        if (!is_string($field) || !is_string($condition)) {
-            throw new StorageException('mysqli', 'where: 无效的参数');
-        }
-        $matches = ['eq', 'neq', 'lk', 'nlk', 'bt', 'nbt', 'in', 'nin'];
-        if (!in_array($condition, $matches)) {
-            throw new StorageException('mysqli', 'where: 无效的参数');
-        }
         $condition = str_replace(
-            $matches,
+            ['eq', 'neq', 'lk', 'nlk', 'bt', 'nbt', 'in', 'nin'],
             ['=', '<>', 'LIKE', 'NOT LIKE', 'BETWEEN', 'NOT BETWEEN', 'IN', 'NOT IN'],
             $condition
         );
@@ -606,35 +561,22 @@ final class MysqliX implements DatabaseInterface
     public function order()
     {
         $args = func_get_args();
-        $num = func_num_args();
+        $argNum = func_num_args();
         $order = null;
-        if ($num > 0) {
-            if ($num === 1) {
-                if (is_string($args[0])) {
-                    $order = $args[0] . ' ASC';
-                } else {
-                    throw new StorageException('mysqli', 'order: 无效的参数');
-                }
-            } elseif ($num === 2) {
-                if (is_string($args[0]) && is_string($args[1])) {
-                    $order = $args[0] . ' ' . strtoupper($args[1]);
-                } elseif (is_array($args[0]) && count($args[0]) === 2 && in_array(strtolower($args[0][1]), ['asc', 'desc']) && is_array($args[1]) && count($args[1]) === 2 && in_array(strtolower($args[1][1]), ['asc', 'desc'])) {
-                    $order = $args[0][0] . ' ' . strtoupper($args[0][1]) . ', ' . $args[1][0] . ' ' . strtoupper($args[1][1]);
-                } else {
-                    throw new StorageException('mysqli', 'order: 无效的参数');
-                }
+        if ($argNum > 0) {
+            if ($argNum === 1) {
+                $order = $args[0] . ' ASC';
             } else {
-                $array = [];
-                foreach ($args as $arg) {
-                    if (!is_array($arg) || count($arg) !== 2 || !in_array(strtolower($arg[1]), ['asc', 'desc'])) {
-                        throw new StorageException('mysqli', 'order: 无效的参数');
+                if ($argNum === 2 && is_string($args[0]) && is_string($args[1])) {
+                    $order = $args[0] . ' ' . strtoupper($args[1]);
+                } else {
+                    $array = [];
+                    foreach ($args as $arg) {
+                        $array[] = $arg[0] . ' ' . strtoupper($arg[1]);
                     }
-                    $array[] = $arg[0] . ' ' . strtoupper($arg[1]);
+                    $order = implode(', ', $array);
                 }
-                $order = implode(', ', $array);
             }
-        } else {
-            throw new StorageException('mysqli', 'order: 缺少参数');
         }
         $this->_data['order'] = ' ORDER BY ' . $order;
         return $this;
@@ -642,18 +584,14 @@ final class MysqliX implements DatabaseInterface
     public function limit()
     {
         $args = func_get_args();
-        $num = func_num_args();
+        $argNum = func_num_args();
         $limit = null;
-        if ($num > 0) {
-            if ($num === 1) {
+        if ($argNum > 0) {
+            if ($argNum === 1) {
                 $limit = $args[0];
-            } elseif ($num === 2) {
+            } elseif ($argNum === 2) {
                 $limit = $args[0] . ', ' . $args[1];
-            } else {
-                throw new StorageException('mysqli', 'limit: 参数数量有误');
             }
-        } else {
-            throw new StorageException('mysqli', 'limit: 缺少参数');
         }
         $this->_data['limit'] = ' LIMIT ' . $limit;
         return $this;
@@ -668,7 +606,7 @@ final class MysqliX implements DatabaseInterface
         $where = isset($this->_data['where']) ? $this->_data['where'] : '';
         $order = isset($this->_data['order']) ? $this->_data['order'] : '';
         $limit = isset($this->_data['limit']) ? $this->_data['limit'] : '';
-        // mysqli 下的 SELECT 标准（未实现一些比如：UNION / GROUP BY / HAVING 等）
+        // mysql ELECT
         $sql = 'SELECT ' . $field . ' FROM ' . $this->_data['table'] . $join . $where . $order . $limit;
         return $this->query($sql);
     }
@@ -682,19 +620,47 @@ final class MysqliX implements DatabaseInterface
             $data[$k] = is_string($v) ? '"' . $v . '"' : $v;
         }
         $value = implode(', ', $data);
+        // mysql INSERT
         $sql = 'INSERT INTO ' . $this->_data['table'] . '(' . $keys . ') VALUES (' . $value . ')';
         return $this->execute($sql);
     }
     public function update($data)
-    {}
+    {
+        if (!isset($this->_data['table'])) {
+            throw new StorageException('mysqli', 'inser: 缺少表名');
+        }
+        $where = isset($this->_data['where']) ? $this->_data['where'] : '';
+        $array = [];
+        foreach ($data as $k => $v) {
+            if (strpos($v, '+') === 0 || strpos($v, '-') === 0) {
+                $array[] = $k . ' = ' . $k . ' ' . $v;
+            } else {
+                $array[] = is_string($v) ? ($k . ' = "' . $v . '"') : ($k . ' = ' . $v);
+            }
+        }
+        $set = implode(', ', $array);
+        // mysql UPDATE
+        $sql = 'UPDATE ' . $this->_data['table'] . ' SET ' . $set . $where;
+        return $this->execute($sql);
+    }
     public function delete()
     {}
     public function startTrans()
-    {}
+    {
+        $connect = $this->getConnect(true);
+        $connect->autocommit(false);
+        return $connect->begin_transaction();
+    }
     public function rollback()
-    {}
+    {
+        $connect = $this->getConnect(true);
+        return $connect->rollback();
+    }
     public function commit()
-    {}
+    {
+        $connect = $this->getConnect(true);
+        return $connect->commit();
+    }
 }
 class ExceptionAbstract extends \Exception {}
 class StorageException extends ExceptionAbstract
