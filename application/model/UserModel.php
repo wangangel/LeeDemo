@@ -51,4 +51,21 @@ class UserModel extends ModelAbstract
 
         return $user;
     }
+
+    /**
+     * 更新正常状态的日志计数
+     *
+     * @param int $userId
+     * @param int $countNormal
+     * @return bool
+     */
+    public function updateNormalPostCount($userId, $countNormal = 0)
+    {
+        return $this->_databaseInstance
+            ->table('user')
+            ->where('id', 'eq', $userId)
+            ->update([
+                'count_normal_post' => '+ ' . $countNormal
+            ]);
+    }
 }

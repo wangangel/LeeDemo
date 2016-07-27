@@ -9,7 +9,6 @@ final class Application
     private $_cacheInstanceArray = [];
     private $_databaseInstanceArray = [];
     private $_modelInstanceArray = [];
-    private $_hookInstanceArray = [];
     public static function getInstance()
     {
         if (self::$_instance === null) {
@@ -23,26 +22,6 @@ final class Application
         $this->_requestInstance = new Request();
         $this->_responseInstance = new Response();
     }
-    public function bootstrap()
-    {
-        $bootstrapFile = ROOT . '/application/module/' . MODULE . '/Bootstrap.php';
-        if (!is_file($bootstrapFile)) {
-            throw new FileNotFoundException($bootstrapFile, '当前应用的初始化文件丢失');
-        }
-        require $bootstrapFile;
-        if (!class_exists('Bootstrap', false)) {
-            throw new UndefinedException('class', 'Bootstrap', '当前应用的初始化类未定义');
-        }
-        $bootstrapInstance = new Bootstrap();
-        $methodArr = get_class_methods($bootstrapInstance);
-        foreach ($methodArr as $method) {
-            if (substr($method, 0, 5) === '_init') {
-                $bootstrapInstance->$method();
-            }
-        }
-        unset($bootstrapInstance);
-        return $this;
-    }
     public function run()
     {
         if (SESSION_CACHE_ENABLE) {
@@ -53,11 +32,9 @@ final class Application
         }
         ini_set('session.auto_start', 0);
         session_start();
-        // todo: beforeRoute Hook
         $routerInstance = new Router();
         $routerInstance->route();
         unset($routerInstance);
-        // todo: beforeDispatch Hook
         $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
@@ -71,14 +48,12 @@ final class Application
         }
         $ret = $controllerInstance->$action();
         unset($controllerInstance);
-        // todo: beforeRender Hook
         if ($this->_isViewRender) {
             $viewInstance = new View();
             $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
             unset($viewInstance);
         }
         $this->_responseInstance->setBody($ret);
-        // todo: beforeResponse Hook
         $this->_responseInstance->output();
     }
     public function disableView()
@@ -129,11 +104,6 @@ final class Application
         }
         return $this->_modelInstanceArray[$modelName];
     }
-    public function registerHook($hookInstance)
-    {
-        $this->_hookInstanceArray[] = $hookInstance;
-        return $this;
-    }
 }
 abstract class ControllerAbstract
 {
@@ -145,13 +115,6 @@ abstract class ModelAbstract
     {
         $this->_databaseInstance = Application::getInstance()->getDatabaseInstance();
     }
-}
-interface HookInterface
-{
-    public function beforeRoute();
-    public function beforeDispatch();
-    public function beforeRender();
-    public function beforeResponse();
 }
 final class Config
 {

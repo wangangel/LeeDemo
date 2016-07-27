@@ -49,11 +49,6 @@ final class Application
     private $_modelInstanceArray = [];
 
     /**
-     * @var array 钩子对象数组
-     */
-    private $_hookInstanceArray = [];
-
-    /**
      * 获取当前类对象
      *
      * @return Application|null
@@ -78,46 +73,6 @@ final class Application
     }
 
     /**
-     * 支持应用自身的初始化
-     *
-     * 当前 MODULE 应用目录下的 Bootstrap.php，执行其中所有以 _init 开头的方法
-     *
-     * 作用：
-     *      1、定义一些应用常量，或者执行一些应用初始化操作
-     *      2、另一个重要的功能：注册 Hook 对象（执行流程：new Application -> bootstrap -> run，run 中将执行埋好的钩子，所以只有在 bootstrap 这一步 registerHook 才能让钩子真正得到执行）
-     *
-     * 使用：
-     *      library\Application::getInstance()->bootstrap()->run()
-     *
-     * @return Application
-     * @throws FileNotFoundException
-     * @throws UndefinedException
-     */
-    public function bootstrap()
-    {
-        $bootstrapFile = ROOT . '/application/module/' . MODULE . '/Bootstrap.php';
-        if (!is_file($bootstrapFile)) {
-            throw new FileNotFoundException($bootstrapFile, '当前应用的初始化文件丢失');
-        }
-        require $bootstrapFile;
-
-        if (!class_exists('Bootstrap', false)) {
-            throw new UndefinedException('class', 'Bootstrap', '当前应用的初始化类未定义');
-        }
-
-        $bootstrapInstance = new Bootstrap();
-        $methodArr = get_class_methods($bootstrapInstance);
-        foreach ($methodArr as $method) {
-            if (substr($method, 0, 5) === '_init') {
-                $bootstrapInstance->$method();
-            }
-        }
-        unset($bootstrapInstance);
-
-        return $this;
-    }
-
-    /**
      * 执行应用
      *
      * @throws FileNotFoundException
@@ -138,16 +93,12 @@ final class Application
         ini_set('session.auto_start', 0);
         session_start();
 
-        // todo: beforeRoute Hook
-
         /**
          * 执行路由
          */
         $routerInstance = new Router();
         $routerInstance->route();
         unset($routerInstance);
-
-        // todo: beforeDispatch Hook
 
         /**
          * 执行分发
@@ -168,8 +119,6 @@ final class Application
         $ret = $controllerInstance->$action();
         unset($controllerInstance);
 
-        // todo: beforeRender Hook
-
         /**
          * 是否渲染视图
          */
@@ -179,8 +128,6 @@ final class Application
             unset($viewInstance);
         }
         $this->_responseInstance->setBody($ret);
-
-        // todo: beforeResponse Hook
 
         /**
          * 执行响应
@@ -288,21 +235,5 @@ final class Application
         }
 
         return $this->_modelInstanceArray[$modelName];
-    }
-
-    /**
-     * 注册钩子对象
-     *
-     * 可以级联调用注册多个钩子，钩子执行次序同注册顺序：
-     *      $application->registerHook(new AHook())->registerHook(new BHook())
-     *
-     * @param HookInterface $hookInstance
-     * @return Application
-     */
-    public function registerHook($hookInstance)
-    {
-        $this->_hookInstanceArray[] = $hookInstance;
-
-        return $this;
     }
 }

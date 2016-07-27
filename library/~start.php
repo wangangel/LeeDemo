@@ -58,7 +58,7 @@ if (is_file($moduleFuncFile)) {
 $runtimeFile = ROOT . '/library/~runtime.php';
 if (!is_file($runtimeFile)) {
     $libraries = array_merge(
-        ['Application', 'ControllerAbstract', 'ModelAbstract', 'HookInterface', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
+        ['Application', 'ControllerAbstract', 'ModelAbstract', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
         ['cache/CacheInterface', 'cache/MemcacheX'],
         ['database/DatabaseInterface', 'database/MysqliX'],
         ['exception/ExceptionAbstract', 'exception/StorageException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException']
@@ -83,7 +83,7 @@ require $runtimeFile;
  * 运行应用
  */
 try {
-    Application::getInstance()->bootstrap()->run();
+    Application::getInstance()->run();
 } catch (\Exception $e) {
     if (Application::getInstance()->getRequestInstance()->isAjax()) {
         exit(json_encode(array(

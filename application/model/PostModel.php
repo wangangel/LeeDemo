@@ -167,9 +167,16 @@ class PostModel extends ModelAbstract
             return false;
         }
 
-        // 更新 post_category 计数
-        $update = Application::getInstance()->getModelInstance('postCategory')->updateOwnerPostCount($categoryId, $userId, 1, 1);
-        if ($update === false) {
+        // 更新 post_category 正常日志计数
+        $updateCategoryCount = Application::getInstance()->getModelInstance('postCategory')->updateOwnerNormalPostCount($categoryId, $userId, 1, 1);
+        if ($updateCategoryCount === false) {
+            $this->_databaseInstance->rollback();
+            return false;
+        }
+
+        // 更新 user 正常日志计数
+        $updateUserCount = Application::getInstance()->getModelInstance('user')->updateNormalPostCount($userId, 1);
+        if ($updateUserCount === false) {
             $this->_databaseInstance->rollback();
             return false;
         } else {

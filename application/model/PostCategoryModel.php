@@ -79,15 +79,14 @@ class PostCategoryModel extends ModelAbstract
     }
 
     /**
-     * 更新文章计数
+     * 更新正常状态的日志计数
      *
      * @param int $categoryId
      * @param int $userId
-     * @param int $count
      * @param int $countNormal
      * @return bool
      */
-    public function updateOwnerPostCount($categoryId, $userId, $count = 0, $countNormal = 0)
+    public function updateOwnerNormalPostCount($categoryId, $userId, $countNormal = 0)
     {
         return $this->_databaseInstance
             ->table('post_category')
@@ -98,7 +97,6 @@ class PostCategoryModel extends ModelAbstract
                 ]
             ])
             ->update([
-                'count_post' => '+ ' . $count,
                 'count_normal_post' => '+ ' . $countNormal
             ]);
     }
