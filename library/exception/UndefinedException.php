@@ -6,7 +6,7 @@
  * Date: 2016/7/19 17:09
  */
 
-class UndefinedException extends ExceptionAbstract
+class UndefinedException extends \Exception
 {
     /**
      * @var string 类型，包括：class / function / param / config

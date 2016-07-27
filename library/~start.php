@@ -61,7 +61,7 @@ if (!is_file($runtimeFile)) {
         ['Application', 'ControllerAbstract', 'ModelAbstract', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
         ['cache/CacheInterface', 'cache/MemcacheX'],
         ['database/DatabaseInterface', 'database/MysqliX'],
-        ['exception/ExceptionAbstract', 'exception/StorageException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException']
+        ['exception/StorageException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException']
     );
     $cache = null;
     foreach ($libraries as $file) {

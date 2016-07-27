@@ -6,7 +6,7 @@
  * Date: 2016/7/18 9:24
  */
 
-class StorageException extends ExceptionAbstract
+class StorageException extends \Exception
 {
     /**
      * @var string 名称，如：mysqli / memcached

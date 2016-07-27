@@ -617,16 +617,19 @@ final class MysqliX implements DatabaseInterface
     public function rollback()
     {
         $connect = $this->getConnect(true);
-        return $connect->rollback();
+        $rollback = $connect->rollback();
+        $connect->autocommit(true);
+        return $rollback;
     }
     public function commit()
     {
         $connect = $this->getConnect(true);
-        return $connect->commit();
+        $commit = $connect->commit();
+        $connect->autocommit(true);
+        return $commit;
     }
 }
-class ExceptionAbstract extends \Exception {}
-class StorageException extends ExceptionAbstract
+class StorageException extends \Exception
 {
     private $_name = null;
     public function __construct($name, $message, $code = 0)
@@ -639,7 +642,7 @@ class StorageException extends ExceptionAbstract
         return $this->_name;
     }
 }
-class UndefinedException extends ExceptionAbstract
+class UndefinedException extends \Exception
 {
     private $_type = null;
     private $_name = null;
@@ -658,7 +661,7 @@ class UndefinedException extends ExceptionAbstract
         return $this->_name;
     }
 }
-class FileNotFoundException extends ExceptionAbstract
+class FileNotFoundException extends \Exception
 {
     protected $_filePath = null;
     public function __construct($filePath, $message, $code = 0)
@@ -671,7 +674,7 @@ class FileNotFoundException extends ExceptionAbstract
         return $this->_filePath;
     }
 }
-class HttpException extends ExceptionAbstract
+class HttpException extends \Exception
 {
     private $_statusCode = null;
     public function __construct($statusCode, $message, $code = 0)

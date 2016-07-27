@@ -8,7 +8,7 @@
  * Date: 2016/7/6 15:13
  */
 
-class FileNotFoundException extends ExceptionAbstract
+class FileNotFoundException extends \Exception
 {
     /**
      * @var string 错误的文件路径

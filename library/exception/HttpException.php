@@ -6,7 +6,7 @@
  * Date: 2016/7/20 16:58
  */
 
-class HttpException extends ExceptionAbstract
+class HttpException extends \Exception
 {
     /**
      * @var int 状态码

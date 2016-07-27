@@ -379,6 +379,7 @@ final class MysqliX implements DatabaseInterface
     public function startTrans()
     {
         $connect = $this->getConnect(true);
+
         $connect->autocommit(false);
         return $connect->begin_transaction();
     }
@@ -391,7 +392,11 @@ final class MysqliX implements DatabaseInterface
     public function rollback()
     {
         $connect = $this->getConnect(true);
-        return $connect->rollback();
+
+        $rollback = $connect->rollback();
+        $connect->autocommit(true);
+
+        return $rollback;
     }
 
     /**
@@ -402,6 +407,10 @@ final class MysqliX implements DatabaseInterface
     public function commit()
     {
         $connect = $this->getConnect(true);
-        return $connect->commit();
+
+        $commit = $connect->commit();
+        $connect->autocommit(true);
+
+        return $commit;
     }
 }
