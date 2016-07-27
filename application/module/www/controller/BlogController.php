@@ -23,7 +23,7 @@ class BlogController extends ControllerAbstract
         $userId = I('get', 'userId', 0, 'intval');
 
         // 博主
-        $user = Application::getInstance()->getModelInstance('user')->getById($userId, true);
+        $user = M('user')->getById($userId, true);
         if (is_string($user)) {
             throw new HttpException(404, $user);
         }
@@ -50,23 +50,22 @@ class BlogController extends ControllerAbstract
         $page = I('get', 'page', 1, 'intval');
 
         // 当前分类
-        $categoryModelInstance = Application::getInstance()->getModelInstance('postCategory');
         $category = [];
         if ($categoryId !== 0) {
-            $category = $categoryModelInstance->getOwnerById($categoryId, $this->_user['id'], true);
+            $category = M('postCategory')->getOwnerById($categoryId, $this->_user['id'], true);
             if (is_string($category)) {
                 throw new HttpException(404, $category);
             }
         }
 
         // 日志列表
-        $data = Application::getInstance()->getModelInstance('post')->getPagedList($page, $this->_user['id'], $categoryId, PostModel::STATUS_NORMAL);
+        $data = M('post')->getPagedList($page, $this->_user['id'], $categoryId, PostModel::STATUS_NORMAL);
         if ($data === false) {
             throw new HttpException(404, '日志列表获取失败');
         }
 
         // 分类列表
-        $categoryList = $categoryModelInstance->getNormalListByUserId($this->_user['id']);
+        $categoryList = M('postCategory')->getNormalListByUserId($this->_user['id']);
         if ($categoryList === false) {
             throw new HttpException(404, '分类列表获取失败');
         }
@@ -93,13 +92,13 @@ class BlogController extends ControllerAbstract
         $postId = I('get', 'postId', 0, 'intval');
 
         // 日志
-        $post = Application::getInstance()->getModelInstance('post')->getOwnerById($postId, $this->_user['id'], true);
+        $post = M('post')->getOwnerById($postId, $this->_user['id'], true);
         if (is_string($post)) {
             throw new HttpException(404, $post);
         }
 
         // 日志正文
-        $postBody = Application::getInstance()->getModelInstance('postBody')->getByPostId($postId);
+        $postBody = M('postBody')->getByPostId($postId);
         if (is_string($postBody)) {
             throw new HttpException(404, $postBody);
         }

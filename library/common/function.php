@@ -22,3 +22,16 @@ function I($source, $key = null, $default = null, $filter = null)
 {
     return Application::getInstance()->getRequestInstance()->getGlobalVariable($source, $key, $default, $filter);
 }
+
+/**
+ * 获取模型对象
+ *
+ * 使用：getModelInstance('user') 则创建 UserModel
+ *
+ * @param string $modelName
+ * @return ModelAbstract
+ */
+function M($modelName)
+{
+    return Application::getInstance()->getModelInstance($modelName);
+}
