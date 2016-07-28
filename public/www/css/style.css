@@ -56,12 +56,12 @@ a:hover {color:red !important;text-decoration:underline;}
 
 
 .box {margin-bottom:10px;}
-.box div.bx-title {padding:0 10px;height:26px;border:solid 1px #ddd;border-bottom:none;background-color:#f5f5f5;overflow:hidden;}
+.box div.bx-title {padding:0 10px;height:25px;border:solid 1px #cfdfff;background-color:#eef6ff;overflow:hidden;}
 .box div.bx-title h3,
-.box div.bx-title em {line-height:26px;}
-.box div.bx-title h3 {float:left;font-size:12px;color:#7c8585;}
+.box div.bx-title em {line-height:25px;}
+.box div.bx-title h3 {float:left;font-size:12px;color:#555;}
 .box div.bx-title em {float:right;font-style:normal;}
-.box div.bx-body {border:solid 1px #ddd;border-top:none;background-color:#fff;}
+.box div.bx-body {border:solid 1px #cfdfff;border-top:none;background-color:#fff;}
 
 
 .post-list ul {padding:0 15px;}

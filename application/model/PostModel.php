@@ -21,12 +21,11 @@ class PostModel extends ModelAbstract
      *
      * @param int $postId
      * @param int $userId
-     * @param bool $statusCheck
-     * @return array
+     * @return mixed
      */
-    public function getOwnerById($postId, $userId, $statusCheck = false)
+    public function getOwnerById($postId, $userId)
     {
-        $ret = $this->_databaseInstance
+        $post = $this->_databaseInstance
             ->table('post')
             ->where([
                 'and' => [
@@ -37,28 +36,7 @@ class PostModel extends ModelAbstract
             ->limit(1)
             ->select();
 
-        if ($ret === false) {
-            return '日志查询异常';
-        }
-        if (empty($ret)) {
-            return '日志不存在';
-        }
-
-        $post = $ret[0];
-        if ($statusCheck) {
-            $status = intval($post['status']);
-            if ($status === self::STATUS_VERIFY) {
-                return '日志正在审核中';
-            } elseif ($status === self::STATUS_RECYCLE) {
-                return '日志在回收站';
-            } elseif ($status === self::STATUS_DELETE) {
-                return '日志已被删除';
-            } elseif ($status !== self::STATUS_NORMAL) {
-                return '日志状态异常';
-            }
-        }
-
-        return $post;
+        return $post !== false && !empty($post) ? $post[0] : $post;
     }
 
     /**
@@ -161,27 +139,51 @@ class PostModel extends ModelAbstract
         }
 
         // 插入 post_body
-        $postBodyId = Application::getInstance()->getModelInstance('postBody')->addOne($postId, $body);
+        $postBodyId = M('postBody')->addOne($postId, $body);
         if ($postBodyId === false) {
             $this->_databaseInstance->rollback();
             return false;
         }
 
         // 更新 post_category 正常日志计数
-        $updateCategoryCount = Application::getInstance()->getModelInstance('postCategory')->updateOwnerNormalPostCount($categoryId, $userId, 1, 1);
+        $updateCategoryCount = M('postCategory')->updateNormalPostCount($categoryId, 1);
         if ($updateCategoryCount === false) {
             $this->_databaseInstance->rollback();
             return false;
         }
 
         // 更新 user 正常日志计数
-        $updateUserCount = Application::getInstance()->getModelInstance('user')->updateNormalPostCount($userId, 1);
+        $updateUserCount = M('user')->updateNormalPostCount($userId, 1);
         if ($updateUserCount === false) {
             $this->_databaseInstance->rollback();
             return false;
-        } else {
-            $this->_databaseInstance->commit();
         }
+
+        // 插入或更新 post_log 本日日志记录
+        $days = date('Y-m-d');
+        $postLog = M('postLog')->getOwnerByDays($days, $userId);
+        if ($postLog === false) {
+            $this->_databaseInstance->rollback();
+            return false;
+        }
+        $postLogId = 0;
+        if (empty($postLog)) {
+            $postLogId = M('postLog')->addOne($days, $userId);
+            if ($postLogId === false) {
+                $this->_databaseInstance->rollback();
+                return false;
+            }
+        } else {
+            $postLogId = $postLog['id'];
+        }
+        $updateLogCount = M('postLog')->updatePostCount($postLogId, 1);
+        if ($updateLogCount === false) {
+            $this->_databaseInstance->rollback();
+            return false;
+        }
+
+        // 提交事务
+        $this->_databaseInstance->commit();
 
         return $postId;
     }

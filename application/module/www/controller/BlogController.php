@@ -23,9 +23,12 @@ class BlogController extends ControllerAbstract
         $userId = I('get', 'userId', 0, 'intval');
 
         // 博主
-        $user = M('user')->getById($userId, true);
-        if (is_string($user)) {
-            throw new HttpException(404, $user);
+        $user = M('user')->getById($userId);
+        if ($user === false) {
+            throw new HttpException(404, '用户信息获取失败');
+        }
+        if (empty($user) || intval($user['status']) !== UserModel::STATUS_NORMAL) {
+            throw new HttpException(404, '用户不存在或状态异常');
         }
 
         $this->_user = $user;
@@ -52,9 +55,12 @@ class BlogController extends ControllerAbstract
         // 当前分类
         $category = [];
         if ($categoryId !== 0) {
-            $category = M('postCategory')->getOwnerById($categoryId, $this->_user['id'], true);
-            if (is_string($category)) {
-                throw new HttpException(404, $category);
+            $category = M('postCategory')->getOwnerById($categoryId, $this->_user['id']);
+            if ($category === false) {
+                throw new HttpException(404, '分类获取失败');
+            }
+            if (empty($category) || intval($category['status']) !== PostCategoryModel::STATUS_NORMAL) {
+                throw new HttpException(404, '分类不存在或状态异常');
             }
         }
 
@@ -93,20 +99,36 @@ class BlogController extends ControllerAbstract
 
         // 日志
         $post = M('post')->getOwnerById($postId, $this->_user['id'], true);
-        if (is_string($post)) {
-            throw new HttpException(404, $post);
+        if ($post === false) {
+            throw new HttpException(404, '日志获取失败');
+        }
+        if (empty($post) || intval($post['status']) !== PostModel::STATUS_NORMAL) {
+            throw new HttpException(404, '日志不存在或状态异常');
         }
 
         // 日志正文
         $postBody = M('postBody')->getByPostId($postId);
-        if (is_string($postBody)) {
-            throw new HttpException(404, $postBody);
+        if ($postBody === false) {
+            throw new HttpException(404, '日志正文获取失败');
+        }
+        if (empty($postBody)) {
+            throw new HttpException(404, '日志正文不存在');
         }
         $post['body'] = $postBody['body'];
 
         return [
             'user' => $this->_user,
             'post' => $post
+        ];
+    }
+
+    /**
+     * 个人档
+     */
+    public function profileAction()
+    {
+        return [
+            'user' => $this->_user
         ];
     }
 }

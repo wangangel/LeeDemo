@@ -71,6 +71,7 @@
                             </div>
                         </div>
                     </div>
+                    <?php echo $user['count_normal_post']; ?>
                 </div>
             </div>
         </div>

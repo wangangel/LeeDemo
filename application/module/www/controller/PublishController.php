@@ -20,11 +20,10 @@ class PublishController extends ControllerAbstract
      */
     public function __construct()
     {
-        // 登录的地方已经做了状态判断，非正常状态的用户信息也不会到 SESSION 中，所以这里不再做状态判断
         if (isset($_SESSION['user'])) {
             $this->_user = $_SESSION['user'];
         } else {
-            throw new HttpException(404, '尚未登录');
+            throw new HttpException(404, '您尚未登录');
         }
     }
 
@@ -34,7 +33,7 @@ class PublishController extends ControllerAbstract
     public function postAddAction()
     {
         // 分类列表
-        $categories = Application::getInstance()->getModelInstance('postCategory')->getNormalListByUserId($this->_user['id']);
+        $categories = M('postCategory')->getNormalListByUserId($this->_user['id']);
 
         return [
             'user' => $this->_user,
@@ -53,16 +52,21 @@ class PublishController extends ControllerAbstract
         $categoryId = I('post', 'categoryId', 0, 'intval');
         $body = I('post', 'body', '', 'trim');
 
-        // 有效性判断
+        // 为空判断
         if (empty($title)) {
             throw new HttpException(404, '标题未填写');
         }
         if (empty($body)) {
             throw new HttpException(404, '正文未填写');
         }
-        $category = Application::getInstance()->getModelInstance('postCategory')->getOwnerById($categoryId, $this->_user['id'], true);
-        if (is_string($category)) {
-            throw new HttpException(404, $category);
+
+        // 分类有效性验证
+        $category = M('postCategory')->getOwnerById($categoryId, $this->_user['id']);
+        if ($category === false) {
+            throw new HttpException(404, '分类获取失败');
+        }
+        if (empty($category) || intval($category['status']) !== PostCategoryModel::STATUS_NORMAL) {
+            throw new HttpException(404, '分类不存在或状态异常');
         }
 
         // 数据处理
@@ -70,7 +74,7 @@ class PublishController extends ControllerAbstract
         $body = htmlspecialchars($body, ENT_QUOTES);
 
         // 发布日志
-        $postId = Application::getInstance()->getModelInstance('post')->publish($categoryId, $this->_user['id'], $title, $body);
+        $postId = M('post')->publish($categoryId, $this->_user['id'], $title, $body);
         if ($postId === false) {
             throw new HttpException(404, '日志发布失败');
         }

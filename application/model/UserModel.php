@@ -19,37 +19,17 @@ class UserModel extends ModelAbstract
      * 根据 id 获取用户
      *
      * @param int $userId
-     * @param bool $statusCheck
      * @return mixed
      */
-    public function getById($userId, $statusCheck = false)
+    public function getById($userId)
     {
-        $ret = $this->_databaseInstance
+        $user = $this->_databaseInstance
             ->table('user')
             ->where('id', 'eq', $userId)
             ->limit(1)
             ->select();
 
-        if ($ret === false) {
-            return '用户查询异常';
-        }
-        if (empty($ret)) {
-            return '用户不存在';
-        }
-
-        $user = $ret[0];
-        if ($statusCheck) {
-            $status = intval($user['status']);
-            if ($status === self::STATUS_VERIFY) {
-                return '用户正在审核中';
-            } elseif ($status === self::STATUS_DELETE) {
-                return '用户已被删除';
-            } elseif ($status !== self::STATUS_NORMAL) {
-                return '用户状态异常';
-            }
-        }
-
-        return $user;
+        return $user !== false && !empty($user) ? $user[0] : $user;
     }
 
     /**
@@ -61,11 +41,20 @@ class UserModel extends ModelAbstract
      */
     public function updateNormalPostCount($userId, $countNormal = 0)
     {
+        $update = null;
+        if ($countNormal === 0) {
+            return false;
+        } elseif ($countNormal > 0) {
+            $update = '+ ' . $countNormal;
+        } else {
+            $update = '- ' . abs($countNormal);
+        }
+
         return $this->_databaseInstance
             ->table('user')
             ->where('id', 'eq', $userId)
             ->update([
-                'count_normal_post' => '+ ' . $countNormal
+                'count_normal_post' => $update
             ]);
     }
 }

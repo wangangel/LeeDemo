@@ -232,28 +232,67 @@ final class Request
 }
 final class Response
 {
+    private $_headerArray = [];
     private $_body = null;
+    public function setHeader($name, $value, $replace = true, $code = 0)
+    {
+        if ($replace === true) {
+            foreach ($this->_headerArray as $k => $v) {
+                if ($v['name'] === $name) {
+                    unset($this->_headerArray[$k]);
+                }
+            }
+        }
+        $this->_headerArray[] = [
+            'name' => $name,
+            'value' => $value,
+            'replace' => $replace,
+            'code' => $code
+        ];
+    }
     public function setBody($content)
     {
         $this->_body = $content;
     }
-    public function getBody()
+    public function sendHeaders()
     {
-        return $this->_body;
+        foreach ($this->_headerArray as $header) {
+            if ($header['code'] !== 0) {
+                header(
+                    $header['name'] . ':' . $header['value'],
+                    $header['replace'],
+                    $header['code']
+                );
+            } else {
+                header(
+                    $header['name'] . ':' . $header['value'],
+                    $header['replace']
+                );
+            }
+        }
+        return $this;
+    }
+    public function setRedirect($url)
+    {
+        $this->setHeader('Location', $url);
+        return $this;
     }
     public function output()
     {
         $isAjax = Application::getInstance()->getRequestInstance()->isAjax();
         $output = null;
         if ($isAjax) {
+            $this->setHeader('Content-Type', 'application/json;charset=UTF-8', true, 200);
             $output = json_encode([
                 'status' => true,
                 'code' => '',
-                'data' => $this->getBody()
+                'data' => $this->_body
             ]);
         } else {
-            $output = $this->getBody();
+            $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
+            $output = $this->_body;
         }
+        $this->sendHeaders();
         exit($output);
     }
 }

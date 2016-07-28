@@ -293,7 +293,7 @@ final class MysqliX implements DatabaseInterface
     /**
      * SELECT
      *
-     * @return array
+     * @return mixed
      * @throws StorageException
      */
     public function select()
@@ -317,7 +317,7 @@ final class MysqliX implements DatabaseInterface
      * INSERT
      *
      * @param $data
-     * @return int
+     * @return mixed
      * @throws StorageException
      */
     public function insert($data)

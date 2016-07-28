@@ -16,20 +16,13 @@ class PostBodyModel extends ModelAbstract
      */
     public function getByPostId($postId)
     {
-        $ret = $this->_databaseInstance
+        $postBody = $this->_databaseInstance
             ->table('post_body')
             ->where('post_id', 'eq', $postId)
             ->limit(1)
             ->select();
 
-        if ($ret === false) {
-            return '日志正文查询异常';
-        }
-        if (empty($ret)) {
-            return '日志正文丢失';
-        }
-
-        return $ret[0];
+        return $postBody !== false && !empty($postBody) ? $postBody[0] : $postBody;
     }
 
     /**
@@ -37,7 +30,7 @@ class PostBodyModel extends ModelAbstract
      *
      * @param int $postId
      * @param string $body
-     * @return int
+     * @return mixed
      */
     public function addOne($postId, $body)
     {

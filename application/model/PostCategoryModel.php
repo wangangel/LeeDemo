@@ -20,12 +20,11 @@ class PostCategoryModel extends ModelAbstract
      *
      * @param int $categoryId
      * @param int $userId
-     * @param bool $statusCheck
      * @return mixed
      */
-    public function getOwnerById($categoryId, $userId, $statusCheck = false)
+    public function getOwnerById($categoryId, $userId)
     {
-        $ret = $this->_databaseInstance
+        $postCategory = $this->_databaseInstance
             ->table('post_category')
             ->where([
                 'and' => [
@@ -36,26 +35,7 @@ class PostCategoryModel extends ModelAbstract
             ->limit(1)
             ->select();
 
-        if ($ret === false) {
-            return '分类查询异常';
-        }
-        if (empty($ret)) {
-            return '分类不存在';
-        }
-
-        $category = $ret[0];
-        if ($statusCheck) {
-            $status = intval($category['status']);
-            if ($status === self::STATUS_VERIFY) {
-                return '分类正在审核中';
-            } elseif ($status === self::STATUS_DELETE) {
-                return '分类已被删除';
-            } elseif ($status !== self::STATUS_NORMAL) {
-                return '分类状态异常';
-            }
-        }
-
-        return $category;
+        return $postCategory !== false && !empty($postCategory) ? $postCategory[0] : $postCategory;
     }
 
     /**
@@ -82,22 +62,25 @@ class PostCategoryModel extends ModelAbstract
      * 更新正常状态的日志计数
      *
      * @param int $categoryId
-     * @param int $userId
      * @param int $countNormal
      * @return bool
      */
-    public function updateOwnerNormalPostCount($categoryId, $userId, $countNormal = 0)
+    public function updateNormalPostCount($categoryId, $countNormal = 0)
     {
+        $update = null;
+        if ($countNormal === 0) {
+            return false;
+        } elseif ($countNormal > 0) {
+            $update = '+ ' . $countNormal;
+        } else {
+            $update = '- ' . abs($countNormal);
+        }
+
         return $this->_databaseInstance
             ->table('post_category')
-            ->where([
-                'and' => [
-                    ['id', 'eq', $categoryId],
-                    ['user_id', 'eq', $userId]
-                ]
-            ])
+            ->where('id', 'eq', $categoryId)
             ->update([
-                'count_normal_post' => '+ ' . $countNormal
+                'count_normal_post' => $update
             ]);
     }
 }

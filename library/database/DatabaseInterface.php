@@ -141,7 +141,7 @@ interface DatabaseInterface
     /**
      * SELECT
      *
-     * @return array
+     * @return mixed
      */
     public function select();
 
@@ -151,7 +151,7 @@ interface DatabaseInterface
      * insert(['name' => 'aaa', 'sex' => 2, 'age' => 22])
      *
      * @param $data
-     * @return int
+     * @return mixed
      */
     public function insert($data);
 
