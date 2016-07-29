@@ -62,8 +62,6 @@ final class Response
 
     /**
      * 输出响应头
-     *
-     * @return Response
      */
     public function sendHeaders()
     {
@@ -79,22 +77,22 @@ final class Response
                     $header['name'] . ':' . $header['value'],
                     $header['replace']
                 );
+                // 重定向不立即中断，后面如果还有 header 可能导致不能跳转
+                if (strtolower($header['name']) === 'location') {
+                    exit(0);
+                }
             }
         }
-
-        return $this;
     }
 
     /**
      * 设置重定向的头
      *
      * @param string $url
-     * @return Response
      */
     public function setRedirect($url)
     {
         $this->setHeader('Location', $url);
-        return $this;
     }
 
     /**
