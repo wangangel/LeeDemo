@@ -73,6 +73,17 @@ final class Application
     }
 
     /**
+     * 关闭视图渲染
+     *
+     * @return Application
+     */
+    public function disableView()
+    {
+        $this->_isViewRender = false;
+        return $this;
+    }
+
+    /**
      * 执行应用
      *
      * @throws FileNotFoundException
@@ -133,14 +144,6 @@ final class Application
          * 执行响应
          */
         $this->_responseInstance->output();
-    }
-
-    /**
-     * 关闭视图渲染
-     */
-    public function disableView()
-    {
-        $this->_isViewRender = false;
     }
 
     /**

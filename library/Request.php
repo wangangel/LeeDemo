@@ -28,6 +28,7 @@ final class Request
      *
      * 1、$source 决定了从那个全局变量获取：get / post / request / server / files / env / cookie / session
      * 2、参数 $key 不指定则获取该全局变量下的所有值，并且不会设置 $default 默认值和执行 $filter 操作
+     * 3、$filter 以 / 开头则默认为正则，否则视为 function
      *
      * @param string $source
      * @param string $key
@@ -47,10 +48,17 @@ final class Request
         if ($key === null) {
             return $data;
         }
+        if (!isset($data[$key])) {
+            return $default;
+        }
 
-        $value = isset($data[$key]) ? $data[$key] : $default;
+        $value = $data[$key];
         if ($filter !== null) {
-            $value = call_user_func($filter, $value);
+            if (strpos($filter, '/') === 0) {
+                $value = preg_match($filter, $value) ? $value : $default;
+            } else {
+                $value = call_user_func($filter, $value);
+            }
         }
 
         return $value;
@@ -90,16 +98,6 @@ final class Request
     public function isCli()
     {
         return $this->getMethod() === 'CLI';
-    }
-
-    /**
-     * 是否是 ajax 请求
-     *
-     * @return bool
-     */
-    public function isAjax()
-    {
-        return strtolower($this->getGlobalVariable('server', 'HTTP_X_REQUESTED_WITH')) === 'ajax';
     }
 
     /**

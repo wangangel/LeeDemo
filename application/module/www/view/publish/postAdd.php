@@ -8,7 +8,7 @@
 <body>
     <div class="wrap">
         <div class="content">
-            <?php include dirname(__DIR__) . '/blog_header.php' ; ?>
+            <?php include dirname(__DIR__) . '/top.php' ; ?>
             <div class="main">
                 <div class="primary">
                     <div class="form-group">

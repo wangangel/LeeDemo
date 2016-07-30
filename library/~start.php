@@ -61,7 +61,7 @@ if (!is_file($runtimeFile)) {
         ['Application', 'ControllerAbstract', 'ModelAbstract', 'Config', 'Request', 'Response', 'Router', 'Session', 'View', 'Log'],
         ['cache/CacheInterface', 'cache/MemcacheX'],
         ['database/DatabaseInterface', 'database/MysqliX'],
-        ['exception/StorageException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException']
+        ['exception/StorageException', 'exception/MailerException', 'exception/UndefinedException', 'exception/FileNotFoundException', 'exception/HttpException']
     );
     $cache = null;
     foreach ($libraries as $file) {
@@ -85,7 +85,8 @@ require $runtimeFile;
 try {
     Application::getInstance()->run();
 } catch (\Exception $e) {
-    if (Application::getInstance()->getRequestInstance()->isAjax()) {
+    // 因为抛错的可能是任何一个对象，所以这里应该都是原生的方法
+    if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'ajax') {
         exit(json_encode(array(
             'status' => false,
             'code' => $e->getMessage(),

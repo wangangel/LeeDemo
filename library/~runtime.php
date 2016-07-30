@@ -22,6 +22,11 @@ final class Application
         $this->_requestInstance = new Request();
         $this->_responseInstance = new Response();
     }
+    public function disableView()
+    {
+        $this->_isViewRender = false;
+        return $this;
+    }
     public function run()
     {
         if (SESSION_CACHE_ENABLE) {
@@ -55,10 +60,6 @@ final class Application
         }
         $this->_responseInstance->setBody($ret);
         $this->_responseInstance->output();
-    }
-    public function disableView()
-    {
-        $this->_isViewRender = false;
     }
     public function getConfigInstance()
     {
@@ -107,6 +108,35 @@ final class Application
 }
 abstract class ControllerAbstract
 {
+    public function json($data)
+    {
+        // 关闭视图
+        Application::getInstance()->disableView();
+        // 设置 json 响应头
+        Application::getInstance()->getResponseInstance()->setHeader('Content-Type', 'application/json;charset=UTF-8', true, 200);
+        // json 格式（成功状态）
+        return json_encode([
+            'status' => true,
+            'code' => '',
+            'data' => $data
+        ]);
+    }
+    public function image($data)
+    {
+        // 关闭视图
+        Application::getInstance()->disableView();
+        // 设置 image 响应头
+        Application::getInstance()->getResponseInstance()->setHeader('Content-Type', 'image/jpeg', true, 200);
+        return $data;
+    }
+    public function redirect($url)
+    {
+        // 关闭视图
+        Application::getInstance()->disableView();
+        // 设置重定向响应头
+        Application::getInstance()->getResponseInstance()->setRedirect($url);
+        return true;
+    }
 }
 abstract class ModelAbstract
 {
@@ -180,9 +210,16 @@ final class Request
         if ($key === null) {
             return $data;
         }
-        $value = isset($data[$key]) ? $data[$key] : $default;
+        if (!isset($data[$key])) {
+            return $default;
+        }
+        $value = $data[$key];
         if ($filter !== null) {
-            $value = call_user_func($filter, $value);
+            if (strpos($filter, '/') === 0) {
+                $value = preg_match($filter, $value) ? $value : $default;
+            } else {
+                $value = call_user_func($filter, $value);
+            }
         }
         return $value;
     }
@@ -207,10 +244,6 @@ final class Request
     {
         return $this->getMethod() === 'CLI';
     }
-    public function isAjax()
-    {
-        return strtolower($this->getGlobalVariable('server', 'HTTP_X_REQUESTED_WITH')) === 'ajax';
-    }
     public function setControllerName($controllerName)
     {
         $this->_controllerName = $controllerName;
@@ -234,6 +267,11 @@ final class Response
 {
     private $_headerArray = [];
     private $_body = null;
+    public function __construct()
+    {
+        // 正常渲染视图的请求会使用这个默认的响应头，ControllerAbstract 中的 json() 和 image() 会各自使用自己覆盖后的响应头
+        $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
+    }
     public function setHeader($name, $value, $replace = true, $code = 0)
     {
         if ($replace === true) {
@@ -268,34 +306,13 @@ final class Response
                     $header['name'] . ':' . $header['value'],
                     $header['replace']
                 );
-                // 重定向不立即中断，后面如果还有 header 可能导致不能跳转
-                if (strtolower($header['name']) === 'location') {
-                    exit(0);
-                }
             }
         }
     }
-    public function setRedirect($url)
-    {
-        $this->setHeader('Location', $url);
-    }
     public function output()
     {
-        $isAjax = Application::getInstance()->getRequestInstance()->isAjax();
-        $output = null;
-        if ($isAjax) {
-            $this->setHeader('Content-Type', 'application/json;charset=UTF-8', true, 200);
-            $output = json_encode([
-                'status' => true,
-                'code' => '',
-                'data' => $this->_body
-            ]);
-        } else {
-            $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
-            $output = $this->_body;
-        }
         $this->sendHeaders();
-        exit($output);
+        exit($this->_body);
     }
 }
 final class Router
@@ -304,8 +321,8 @@ final class Router
     const DEFAULT_ACTION_NAME = 'index';
     public function route()
     {
-        $controllerName = I('get', 'c', self::DEFAULT_CONTROLLER_NAME);
-        $actionName = I('get', 'a', self::DEFAULT_ACTION_NAME);
+        $controllerName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'c', self::DEFAULT_CONTROLLER_NAME);
+        $actionName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'a', self::DEFAULT_ACTION_NAME);
         $controllerName = preg_match('/^[a-z]+$/', $controllerName) ? $controllerName : self::DEFAULT_CONTROLLER_NAME;
         $actionName = preg_match('/^[a-zA-Z]+$/', $actionName) ? $actionName : self::DEFAULT_ACTION_NAME;
         Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
@@ -681,6 +698,13 @@ class StorageException extends \Exception
     public function getName()
     {
         return $this->_name;
+    }
+}
+class MailerException extends \Exception
+{
+    public function __construct($message, $code = 0)
+    {
+        parent::__construct($message, $code);
     }
 }
 class UndefinedException extends \Exception

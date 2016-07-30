@@ -19,13 +19,22 @@ final class Response
     private $_body = null;
 
     /**
+     * 构造器
+     */
+    public function __construct()
+    {
+        // 正常渲染视图的请求会使用这个默认的响应头，ControllerAbstract 中的 json() 和 image() 会各自使用自己覆盖后的响应头
+        $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
+    }
+
+    /**
      * 设置响应头
      *
      * 可选参数 replace 表明是否用后面的头替换前面相同类型的头。 默认情况下会替换。如果传入 FALSE，就可以强制使相同的头信息并存。例如：
      * header('WWW-Authenticate: Negotiate');
      * header('WWW-Authenticate: NTLM', false);
      *
-     * $replace === true 则强制替换前一个同名的 header
+     * $replace === true 则强制替换掉前一个同名的 header
      *
      * @param string $name
      * @param string $value
@@ -77,22 +86,8 @@ final class Response
                     $header['name'] . ':' . $header['value'],
                     $header['replace']
                 );
-                // 重定向不立即中断，后面如果还有 header 可能导致不能跳转
-                if (strtolower($header['name']) === 'location') {
-                    exit(0);
-                }
             }
         }
-    }
-
-    /**
-     * 设置重定向的头
-     *
-     * @param string $url
-     */
-    public function setRedirect($url)
-    {
-        $this->setHeader('Location', $url);
     }
 
     /**
@@ -100,23 +95,7 @@ final class Response
      */
     public function output()
     {
-        $isAjax = Application::getInstance()->getRequestInstance()->isAjax();
-
-        $output = null;
-        if ($isAjax) {
-            $this->setHeader('Content-Type', 'application/json;charset=UTF-8', true, 200);
-            $output = json_encode([
-                'status' => true,
-                'code' => '',
-                'data' => $this->_body
-            ]);
-        } else {
-            $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
-            $output = $this->_body;
-        }
-
         $this->sendHeaders();
-
-        exit($output);
+        exit($this->_body);
     }
 }

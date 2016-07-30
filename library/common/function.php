@@ -7,31 +7,68 @@
  */
 
 /**
- * $_GET / $_POST / $_REQUEST / $_SERVER / $_FILES / $_ENV / $_COOKIE / $_SESSION
+ * 导入第三方文件
  *
- * 1、$source 决定了从那个全局变量获取：get / post / request / server / files / env / cookie / session
- * 2、参数 $key 不指定则获取该全局变量下的所有值，并且不会设置 $default 默认值和执行 $filter 操作
- *
- * @param string $source
- * @param string $key
- * @param mixed $default
- * @param string $filter
- * @return mixed
+ * @param string $fileName
+ * @return bool
+ * @throws FileNotFoundException
  */
-function I($source, $key = null, $default = null, $filter = null)
+function vendor($fileName)
 {
-    return Application::getInstance()->getRequestInstance()->getGlobalVariable($source, $key, $default, $filter);
+    static $_vendorArray = [];
+
+    if (!isset($_vendorArray[$fileName])) {
+        $file = ROOT . '/library/vendor/' . $fileName;
+        if (!is_file($file)) {
+            throw new FileNotFoundException($file, '第三方类库不存在');
+        } else {
+            require $file;
+        }
+    }
+
+    return ($_vendorArray[$fileName] = true);
 }
 
 /**
- * 获取模型对象
- *
- * 使用：getModelInstance('user') 则创建 UserModel
- *
- * @param string $modelName
- * @return ModelAbstract
+ * @param string $address
+ * @param string $subject
+ * @param string $body
+ * @return bool
+ * @throws MailerException
  */
-function M($modelName)
+function mailer($address, $subject, $body)
 {
-    return Application::getInstance()->getModelInstance($modelName);
+    vendor('PHPMailer-master/PHPMailerAutoload.php');
+    $mail = new \PHPMailer();
+
+    $mailConfig = Application::getInstance()->getConfigInstance()->get('mail');
+
+    // $mail->SMTPDebug = 3; // Enable verbose debug output
+
+    $mail->isSMTP();
+    $mail->Host = $mailConfig['host'];
+    $mail->SMTPAuth = true;
+    $mail->Username = $mailConfig['username'];
+    $mail->Password = $mailConfig['password'];
+    $mail->SMTPSecure = 'tls'; // Enable TLS encryption, `ssl` also accepted
+    $mail->Port = $mailConfig['port'];
+
+    $mail->setFrom($mailConfig['fromAddress'], $mailConfig['fromName']);
+    $mail->addAddress($address);
+    // $mail->addReplyTo('info@example.com', 'Information');
+    // $mail->addCC('cc@example.com');
+    // $mail->addBCC('bcc@example.com');
+
+    // $mail->addAttachment('/var/tmp/file.tar.gz');
+    $mail->isHTML(true);
+
+    $mail->Subject = $subject;
+    $mail->Body = $body;
+    // $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+
+    if(!$mail->send()) {
+        throw new MailerException($mail->ErrorInfo);
+    }
+
+    return true;
 }

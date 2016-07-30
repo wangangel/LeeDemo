@@ -52,6 +52,17 @@ return [
         ]
     ],
 
+    // 邮件配置
+    'mail' => [
+        'fromAddress' => '670554666@qq.com',
+        'fromName' => '游走的夜',
+        'host' => 'smtp.qq.com',
+        'username' => '670554666@qq.com',
+        'password' => 'yzm_1314520',
+        'port' => 587,
+        'charset' => 'UTF-8'
+    ],
+
     // 显示设置
     'display' => [
         'postNumPerPage' => 15  // 日志列表每页数量

@@ -13,11 +13,22 @@ class IndexController extends ControllerAbstract
      */
     public function indexAction()
     {
-        $_SESSION['user'] = [
-            'id' => 1,
-            'email' => '670554666@qq.com',
-            'nickname' => 'adf',
-            'status' => 2
-        ];
+        // view
+    }
+
+    /**
+     * 显示验证码
+     */
+    public function captchaAction()
+    {
+        // 生成二维码
+        vendor('Captcha-master/autoload.php');
+        $captcha = new Gregwar\Captcha\CaptchaBuilder();
+        $captcha->build();
+
+        // session
+        $_SESSION['captcha'] = $captcha->getPhrase();
+
+        return $this->image($captcha->get());
     }
 }
