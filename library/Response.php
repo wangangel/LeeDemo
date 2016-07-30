@@ -23,7 +23,8 @@ final class Response
      */
     public function __construct()
     {
-        // 正常渲染视图的请求会使用这个默认的响应头，ControllerAbstract 中的 json() 和 image() 会各自使用自己覆盖后的响应头
+        // 正常渲染视图的请求会使用这个默认的响应头
+        // ControllerAbstract 中的 json() / image() 会使用自己覆盖后的响应头，redirect() 的 Location 在这之后，所以不会存在跳转不了的问题
         $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
     }
 
