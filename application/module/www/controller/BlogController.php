@@ -20,10 +20,10 @@ class BlogController extends ControllerAbstract
      */
     public function __construct()
     {
-        $userId = I('get', 'userId', 0, 'intval');
+        $userId = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'userId', 0, 'intval');
 
         // 博主
-        $user = M('user')->getById($userId);
+        $user = Application::getInstance()->getModelInstance('user')->getById($userId);
         if ($user === false) {
             throw new HttpException(404, '用户信息获取失败');
         }
@@ -49,13 +49,13 @@ class BlogController extends ControllerAbstract
      */
     public function postListAction()
     {
-        $categoryId = I('get', 'categoryId', 0, 'intval');
-        $page = I('get', 'page', 1, 'intval');
+        $categoryId = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'categoryId', 0, 'intval');
+        $page = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'page', 1, 'intval');
 
         // 当前分类
         $category = [];
         if ($categoryId !== 0) {
-            $category = M('postCategory')->getOwnerById($categoryId, $this->_user['id']);
+            $category = Application::getInstance()->getModelInstance('postCategory')->getOwnerById($categoryId, $this->_user['id']);
             if ($category === false) {
                 throw new HttpException(404, '分类获取失败');
             }
@@ -65,13 +65,13 @@ class BlogController extends ControllerAbstract
         }
 
         // 日志列表
-        $data = M('post')->getPagedList($page, $this->_user['id'], $categoryId, PostModel::STATUS_NORMAL);
+        $data = Application::getInstance()->getModelInstance('post')->getPagedList($page, $this->_user['id'], $categoryId, PostModel::STATUS_NORMAL);
         if ($data === false) {
             throw new HttpException(404, '日志列表获取失败');
         }
 
         // 分类列表
-        $categoryList = M('postCategory')->getNormalListByUserId($this->_user['id']);
+        $categoryList = Application::getInstance()->getModelInstance('postCategory')->getNormalListByUserId($this->_user['id']);
         if ($categoryList === false) {
             throw new HttpException(404, '分类列表获取失败');
         }

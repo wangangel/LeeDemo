@@ -57,4 +57,27 @@ class UserModel extends ModelAbstract
                 'count_normal_post' => $update
             ]);
     }
+
+    /**
+     * 插入一条记录
+     *
+     * @param string $email
+     * @param string $password
+     * @param string $salt
+     * @param string $nickname
+     * @return mixed
+     */
+    public function addOne($email, $password, $salt, $nickname)
+    {
+        return $this->_databaseInstance
+            ->table('user')
+            ->insert([
+                'email' => $email,
+                'password' => $password,
+                'salt' => $salt,
+                'nickname' => $nickname,
+                'status' => 2,
+                'time_register' => time()
+            ]);
+    }
 }

@@ -6,12 +6,12 @@
     <link rel="stylesheet" type="text/css" href="/css/style.css">
 </head>
 <body>
-    <div class="wrap">
-        <div class="content">
+    <div class="BL_wrap">
+        <div class="BL_content">
             <?php include dirname(__DIR__) . '/top.php' ; ?>
             <?php include dirname(__DIR__) . '/blog_header.php' ; ?>
-            <div class="main">
-                <div class="primary">
+            <div class="BL_main">
+                <div class="BL_primary">
                     <div class="box">
                         <div class="bx-title">
                             <h3><?php echo $param['categoryId'] === 0 ? '日志列表' : $category['name']; ?></h3>
@@ -57,7 +57,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="sidebar">
+                <div class="BL_sidebar">
                     <div class="box">
                         <div class="bx-title">
                             <h3>日志分类</h3>

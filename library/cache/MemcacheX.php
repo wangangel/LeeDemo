@@ -27,7 +27,7 @@ final class MemcacheX implements CacheInterface
                 $memcached->addServer($server['HOST'], $server['PORT']);
             }
             $this->_memcacheInstance = $memcached;
-        } catch (\MemcachedException $e) {
+        } catch (StorageException $e) {
             throw new StorageException('memcached', $e->getMessage(), $e->getCode());
         }
     }

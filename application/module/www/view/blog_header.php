@@ -1,4 +1,4 @@
-<div class="header">
+<div class="BL_header">
     <div class="hd-menu">
         <ul>
             <li><a href="/?c=blog&userId=<?php echo $user['id']; ?>">首页</a></li>

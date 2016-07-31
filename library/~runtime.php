@@ -134,7 +134,7 @@ abstract class ControllerAbstract
         // 关闭视图
         Application::getInstance()->disableView();
         // 设置重定向响应头
-        Application::getInstance()->getResponseInstance()->setRedirect($url);
+        Application::getInstance()->getResponseInstance()->setHeader('Location', $url);
         return true;
     }
 }
@@ -269,7 +269,8 @@ final class Response
     private $_body = null;
     public function __construct()
     {
-        // 正常渲染视图的请求会使用这个默认的响应头，ControllerAbstract 中的 json() 和 image() 会各自使用自己覆盖后的响应头
+        // 正常渲染视图的请求会使用这个默认的响应头
+        // ControllerAbstract 中的 json() / image() 会使用自己覆盖后的响应头，redirect() 的 Location 在这之后，所以不会存在跳转不了的问题
         $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
     }
     public function setHeader($name, $value, $replace = true, $code = 0)
@@ -398,7 +399,7 @@ final class MemcacheX implements CacheInterface
                 $memcached->addServer($server['HOST'], $server['PORT']);
             }
             $this->_memcacheInstance = $memcached;
-        } catch (\MemcachedException $e) {
+        } catch (StorageException $e) {
             throw new StorageException('memcached', $e->getMessage(), $e->getCode());
         }
     }

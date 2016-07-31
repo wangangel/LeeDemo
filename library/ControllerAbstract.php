@@ -59,7 +59,7 @@ abstract class ControllerAbstract
         Application::getInstance()->disableView();
 
         // 设置重定向响应头
-        Application::getInstance()->getResponseInstance()->setRedirect($url);
+        Application::getInstance()->getResponseInstance()->setHeader('Location', $url);
 
         return true;
     }

@@ -98,7 +98,7 @@ class PostModel extends ModelAbstract
      * @param int $userId
      * @param string $title
      * @param string $description
-     * @return int
+     * @return mixed
      */
     public function addOne($categoryId, $userId, $title, $description)
     {

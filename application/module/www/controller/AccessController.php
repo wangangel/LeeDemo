@@ -15,7 +15,7 @@ class AccessController extends ControllerAbstract
     {
         // 已登陆
         if (isset($_SESSION['user'])) {
-            Application::getInstance()->disableView()->getResponseInstance()->setRedirect('/');
+            $this->redirect('/');
         }
     }
 
@@ -31,7 +31,7 @@ class AccessController extends ControllerAbstract
 
         // 已登陆
         if (isset($_SESSION['user'])) {
-            Application::getInstance()->getResponseInstance()->setRedirect('/');
+            $this->redirect('/');
         }
 
         // 邮箱验证
@@ -40,7 +40,7 @@ class AccessController extends ControllerAbstract
         }
 
         // 验证码验证
-        if ($email !== null && strtolower($captcha) !== $_SESSION['captcha']) {
+        if ($captcha === null || $_SESSION['captcha'] === null || strtolower($captcha) !== $_SESSION['captcha']) {
             throw new HttpException(404, '验证码校验失败');
         }
         $_SESSION['captcha'] = null;
@@ -60,9 +60,9 @@ class AccessController extends ControllerAbstract
             ];
         }
 
-        return [
+        return $this->json([
             'mailer' => $mailer
-        ];
+        ]);
     }
 
     /**
@@ -70,7 +70,17 @@ class AccessController extends ControllerAbstract
      */
     public function registerVerifyAction()
     {
-        return $_SESSION['emailVerify'];
+        // 已登陆
+        if (isset($_SESSION['user'])) {
+            $this->redirect('/');
+        }
+
+        $tokenGet = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'token', null);
+
+        return [
+            'emailVerify' => $_SESSION['emailVerify'],
+            'tokenGet' => $tokenGet
+        ];
     }
 
     /**
@@ -78,7 +88,52 @@ class AccessController extends ControllerAbstract
      */
     public function registerVerifySubmitAction()
     {
+        Application::getInstance()->disableView();
 
+        // 已登陆
+        if (isset($_SESSION['user'])) {
+            $this->redirect('/');
+        }
+
+        // emailVerify session 过期
+        if (empty($_SESSION['emailVerify'])) {
+            throw new HttpException(404, '验证邮件已过期');
+        }
+        $emailVerify = $_SESSION['emailVerify'];
+
+        $password = Application::getInstance()->getRequestInstance()->getGlobalVariable('post', 'password', null, '/^[\@A-Za-z0-9\!\#\$\%\^\&\*\.\~]{6,15}$/');
+        $nickname = Application::getInstance()->getRequestInstance()->getGlobalVariable('post', 'nickname', null, '/^[^\s]+$/');
+
+        // 密码验证
+        if ($password === null) {
+            throw new HttpException(404, '密码格式有误');
+        }
+
+        // 昵称验证
+        if ($nickname === null) {
+            throw new HttpException(404, '昵称格式有误');
+        }
+
+        // user 入库
+        $salt = md5(uniqid(md5(mt_rand(10000, 99999))));
+        $password = md5($password . $salt);
+        $userId = Application::getInstance()->getModelInstance('user')->addOne($emailVerify['email'], $password, $salt, $nickname);
+        if ($userId === false) {
+            throw new HttpException(404, '注册失败');
+        }
+
+        // 清除 emailVerify session
+        $_SESSION['emailVerify'] = null;
+
+        // user session
+        $_SESSION['user'] = [
+            'email' => $emailVerify['email'],
+            'nickname' => $nickname
+        ];
+
+        return $this->json([
+            'userId' => $userId
+        ]);
     }
 
     /**
@@ -103,6 +158,6 @@ class AccessController extends ControllerAbstract
     public function logoutAction()
     {
         session_destroy();
-        $this->redirect('/');
+        return $this->redirect('/');
     }
 }
