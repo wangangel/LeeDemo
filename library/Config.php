@@ -14,37 +14,24 @@ final class Config
     private $_configArray = null;
 
     /**
-     * 构造器
+     * 导入配置
      *
-     * 如果传递了配置数组，则按配置数组配置
-     * 否则按默认规则加载配置文件：/application/config，/application/module/MODULE/config
+     * load(ROOT . 'application/config/exceptionCode.php')
      *
-     * @param array $configArray
-     * @throws FileNotFoundException
-     * @throws UndefinedException
+     * @param string $file
+     * @throws Exception
      */
-    public function __construct($configArray = null)
+    public function load($file)
     {
-        if ($configArray !== null) {
-            $this->_configArray = $configArray;
-        } else {
-            // 系统配置
-            $systemConfigFile = ROOT . '/application/config/' . ENV . '.php';
-            if (!is_file($systemConfigFile)) {
-                throw new FileNotFoundException($systemConfigFile, '系统配置文件丢失');
-            }
-            $config = include $systemConfigFile;
+        if (!is_file($file)) {
+            throw new \Exception($file, 10007);
+        }
+        $config = include $file;
 
-            // 应用配置
-            $moduleConfigFile = ROOT . '/application/module/' . MODULE . '/config/' . ENV . '.php';
-            if (is_file($moduleConfigFile)) {
-                $config = array_merge(
-                    $config,
-                    include $moduleConfigFile
-                );
-            }
-
+        if ($this->_configArray === null) {
             $this->_configArray = $config;
+        } else {
+            $this->_configArray = array_merge($this->_configArray, $config);
         }
     }
 
@@ -55,29 +42,31 @@ final class Config
      *
      * @param string $key
      * @return mixed
-     * @throws UndefinedException
+     * @throws Exception
      */
-    public function get($key)
+    public function get($key = null)
     {
         $ret = null;
-        if (strpos($key, '.') > 0) {
+        if ($key === null) {
+            $ret = $this->_configArray;
+        } elseif (strpos($key, '.') > 0) {
             $array = explode('.', $key);
             switch (count($array)) {
                 case 2:
-                    $ret = isset($this->_configArray[$array[0]][$array[1]]) ? $this->_configArray[$array[0]][$array[1]] : null;
+                    $ret = $this->_configArray[$array[0]][$array[1]] === null ? null : $this->_configArray[$array[0]][$array[1]];
                     break;
                 case 3:
-                    $ret = isset($this->_configArray[$array[0]][$array[1]][$array[2]]) ? $this->_configArray[$array[0]][$array[1]][$array[2]] : null;
+                    $ret = $this->_configArray[$array[0]][$array[1]][$array[2]] === null ? null : $this->_configArray[$array[0]][$array[1]][$array[2]];
                     break;
                 default:
                     break;
             }
         } else {
-            $ret = isset($this->_configArray[$key]) ? $this->_configArray[$key] : null;
+            $ret = $this->_configArray[$key] === null ? null : $this->_configArray[$key];
         }
 
-        if (is_null($ret)) {
-            throw new UndefinedException('config', $key, '配置不存在');
+        if ($ret === null) {
+            throw new \Exception($key, 10008);
         }
 
         return $ret;

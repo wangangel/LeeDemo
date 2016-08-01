@@ -1,387 +1,4 @@
 <?php
-final class Application
-{
-    private static $_instance = null;
-    private $_isViewRender = true;
-    private $_configInstance = null;
-    private $_requestInstance = null;
-    private $_responseInstance = null;
-    private $_cacheInstanceArray = [];
-    private $_databaseInstanceArray = [];
-    private $_modelInstanceArray = [];
-    public static function getInstance()
-    {
-        if (self::$_instance === null) {
-            self::$_instance = new self();
-        }
-        return self::$_instance;
-    }
-    public function __construct()
-    {
-        $this->_configInstance = new Config();
-        $this->_requestInstance = new Request();
-        $this->_responseInstance = new Response();
-    }
-    public function disableView()
-    {
-        $this->_isViewRender = false;
-        return $this;
-    }
-    public function run()
-    {
-        if (SESSION_CACHE_ENABLE) {
-            ini_set('session.gc_probability', 0);
-            session_set_save_handler(new Session(), true);
-        } else {
-            ini_set('session.gc_probability', 1);
-        }
-        ini_set('session.auto_start', 0);
-        session_start();
-        $routerInstance = new Router();
-        $routerInstance->route();
-        unset($routerInstance);
-        $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
-        $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
-        if (!is_file($controllerFile)) {
-            throw new FileNotFoundException($controllerFile, '控制器文件丢失');
-        }
-        require $controllerFile;
-        $action = $this->_requestInstance->getActionName() . 'Action';
-        $controllerInstance = new $controller();
-        if (!method_exists($controllerInstance, $action)) {
-            throw new UndefinedException('function', $action, '控制器 ' . $controller . ' 下未定义动作');
-        }
-        $ret = $controllerInstance->$action();
-        unset($controllerInstance);
-        if ($this->_isViewRender) {
-            $viewInstance = new View();
-            $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
-            unset($viewInstance);
-        }
-        $this->_responseInstance->setBody($ret);
-        $this->_responseInstance->output();
-    }
-    public function getConfigInstance()
-    {
-        return $this->_configInstance;
-    }
-    public function getRequestInstance()
-    {
-        return $this->_requestInstance;
-    }
-    public function getResponseInstance()
-    {
-        return $this->_responseInstance;
-    }
-    public function getCacheInstance($driverName = null)
-    {
-        $driverName = $driverName === null ? ucfirst(Application::getInstance()->getConfigInstance()->get('cache.driver')) : $driverName;
-        if (!isset($this->_cacheInstanceArray[$driverName])) {
-            $this->_cacheInstanceArray[$driverName] = new $driverName();
-        }
-        return $this->_cacheInstanceArray[$driverName];
-    }
-    public function getDatabaseInstance($driverName = null)
-    {
-        $driverName = $driverName === null ? ucfirst(Application::getInstance()->getConfigInstance()->get('database.driver')) : $driverName;
-        if (!isset($this->_databaseInstanceArray[$driverName])) {
-            $this->_databaseInstanceArray[$driverName] = new $driverName();
-        }
-        return $this->_databaseInstanceArray[$driverName];
-    }
-    public function getModelInstance($modelName)
-    {
-        $modelName = ucfirst($modelName) . 'Model';
-        if (!isset($this->_modelInstanceArray[$modelName])) {
-            $modelFile = ROOT . '/application/model/' . $modelName . '.php';
-            if (!is_file($modelFile)) {
-                throw new FileNotFoundException($modelFile, '模型文件丢失');
-            }
-            require $modelFile;
-            if (!class_exists($modelName, false)) {
-                throw new UndefinedException('class', $modelName, '模型类未定义');
-            }
-            $this->_modelInstanceArray[$modelName] = new $modelName();
-        }
-        return $this->_modelInstanceArray[$modelName];
-    }
-}
-abstract class ControllerAbstract
-{
-    public function json($data)
-    {
-        // 关闭视图
-        Application::getInstance()->disableView();
-        // 设置 json 响应头
-        Application::getInstance()->getResponseInstance()->setHeader('Content-Type', 'application/json;charset=UTF-8', true, 200);
-        // json 格式（成功状态）
-        return json_encode([
-            'status' => true,
-            'code' => '',
-            'data' => $data
-        ]);
-    }
-    public function image($data)
-    {
-        // 关闭视图
-        Application::getInstance()->disableView();
-        // 设置 image 响应头
-        Application::getInstance()->getResponseInstance()->setHeader('Content-Type', 'image/jpeg', true, 200);
-        return $data;
-    }
-    public function redirect($url)
-    {
-        // 关闭视图
-        Application::getInstance()->disableView();
-        // 设置重定向响应头
-        Application::getInstance()->getResponseInstance()->setHeader('Location', $url);
-        return true;
-    }
-}
-abstract class ModelAbstract
-{
-    protected $_databaseInstance = null;
-    public function __construct()
-    {
-        $this->_databaseInstance = Application::getInstance()->getDatabaseInstance();
-    }
-}
-final class Config
-{
-    private $_configArray = null;
-    public function __construct($configArray = null)
-    {
-        if ($configArray !== null) {
-            $this->_configArray = $configArray;
-        } else {
-            // 系统配置
-            $systemConfigFile = ROOT . '/application/config/' . ENV . '.php';
-            if (!is_file($systemConfigFile)) {
-                throw new FileNotFoundException($systemConfigFile, '系统配置文件丢失');
-            }
-            $config = include $systemConfigFile;
-            // 应用配置
-            $moduleConfigFile = ROOT . '/application/module/' . MODULE . '/config/' . ENV . '.php';
-            if (is_file($moduleConfigFile)) {
-                $config = array_merge(
-                    $config,
-                    include $moduleConfigFile
-                );
-            }
-            $this->_configArray = $config;
-        }
-    }
-    public function get($key)
-    {
-        $ret = null;
-        if (strpos($key, '.') > 0) {
-            $array = explode('.', $key);
-            switch (count($array)) {
-                case 2:
-                    $ret = isset($this->_configArray[$array[0]][$array[1]]) ? $this->_configArray[$array[0]][$array[1]] : null;
-                    break;
-                case 3:
-                    $ret = isset($this->_configArray[$array[0]][$array[1]][$array[2]]) ? $this->_configArray[$array[0]][$array[1]][$array[2]] : null;
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            $ret = isset($this->_configArray[$key]) ? $this->_configArray[$key] : null;
-        }
-        if (is_null($ret)) {
-            throw new UndefinedException('config', $key, '配置不存在');
-        }
-        return $ret;
-    }
-}
-final class Request
-{
-    private $_method = null;
-    private $_controllerName = null;
-    private $_actionName = null;
-    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
-    {
-        if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
-            return null;
-        }
-        $data = null;
-        eval('$data = $_' . strtoupper($source) . ';');
-        if ($key === null) {
-            return $data;
-        }
-        if (!isset($data[$key])) {
-            return $default;
-        }
-        $value = $data[$key];
-        if ($filter !== null) {
-            if (strpos($filter, '/') === 0) {
-                $value = preg_match($filter, $value) ? $value : $default;
-            } else {
-                $value = call_user_func($filter, $value);
-            }
-        }
-        return $value;
-    }
-    public function getMethod()
-    {
-        if ($this->_method === null) {
-            $method = $this->getGlobalVariable('server', 'REQUEST_METHOD');
-            if ($method) {
-                $this->_method = strtoupper($method);
-            } else {
-                $sapi = php_sapi_name();
-                if (strtolower($sapi) === 'cli' || strtolower(substr($sapi, 0, 3)) === 'cgi') {
-                    $this->_method = 'CLI';
-                } else {
-                    $this->_method = 'UNKNOWN';
-                }
-            }
-        }
-        return $this->_method;
-    }
-    public function isCli()
-    {
-        return $this->getMethod() === 'CLI';
-    }
-    public function setControllerName($controllerName)
-    {
-        $this->_controllerName = $controllerName;
-        return $this;
-    }
-    public function setActionName($actionName)
-    {
-        $this->_actionName = $actionName;
-        return $this;
-    }
-    public function getControllerName()
-    {
-        return $this->_controllerName;
-    }
-    public function getActionName()
-    {
-        return $this->_actionName;
-    }
-}
-final class Response
-{
-    private $_headerArray = [];
-    private $_body = null;
-    public function __construct()
-    {
-        // 正常渲染视图的请求会使用这个默认的响应头
-        // ControllerAbstract 中的 json() / image() 会使用自己覆盖后的响应头，redirect() 的 Location 在这之后，所以不会存在跳转不了的问题
-        $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
-    }
-    public function setHeader($name, $value, $replace = true, $code = 0)
-    {
-        if ($replace === true) {
-            foreach ($this->_headerArray as $k => $v) {
-                if ($v['name'] === $name) {
-                    unset($this->_headerArray[$k]);
-                }
-            }
-        }
-        $this->_headerArray[] = [
-            'name' => $name,
-            'value' => $value,
-            'replace' => $replace,
-            'code' => $code
-        ];
-    }
-    public function setBody($content)
-    {
-        $this->_body = $content;
-    }
-    public function sendHeaders()
-    {
-        foreach ($this->_headerArray as $header) {
-            if ($header['code'] !== 0) {
-                header(
-                    $header['name'] . ':' . $header['value'],
-                    $header['replace'],
-                    $header['code']
-                );
-            } else {
-                header(
-                    $header['name'] . ':' . $header['value'],
-                    $header['replace']
-                );
-            }
-        }
-    }
-    public function output()
-    {
-        $this->sendHeaders();
-        exit($this->_body);
-    }
-}
-final class Router
-{
-    const DEFAULT_CONTROLLER_NAME = 'index';
-    const DEFAULT_ACTION_NAME = 'index';
-    public function route()
-    {
-        $controllerName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'c', self::DEFAULT_CONTROLLER_NAME);
-        $actionName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'a', self::DEFAULT_ACTION_NAME);
-        $controllerName = preg_match('/^[a-z]+$/', $controllerName) ? $controllerName : self::DEFAULT_CONTROLLER_NAME;
-        $actionName = preg_match('/^[a-zA-Z]+$/', $actionName) ? $actionName : self::DEFAULT_ACTION_NAME;
-        Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
-    }
-}
-final class Session implements \SessionHandlerInterface
-{
-    private $_cacheInstance = null;
-    public function __construct()
-    {
-        $this->_cacheInstance = Application::getInstance()->getCacheInstance();
-    }
-    public function open($savePath, $sessionName)
-    {
-        return true;
-    }
-    public function read($sessionId)
-    {
-        return $this->_cacheInstance->get('sess-' . $sessionId);
-    }
-    public function write($sessionId, $sessionData)
-    {
-        $this->_cacheInstance->set('sess-' . $sessionId, $sessionData, SESSION_CACHE_TIMEOUT);
-    }
-    public function close()
-    {
-        return true;
-    }
-    public function destroy($sessionId)
-    {
-        $this->_cacheInstance->delete('sess-' . $sessionId);
-    }
-    public function gc($maxLifetime)
-    {
-        return false;
-    }
-}
-final class View
-{
-    private $_viewPath = null;
-    public function __construct()
-    {
-        // 暂时默认视图到这里（目前不提供 setViewPath()，也不支持第三方如 smarty / volt 等模版引擎，将来可扩展）
-        $this->_viewPath = ROOT . '/application/module/' . MODULE . '/view/' . Application::getInstance()->getRequestInstance()->getControllerName();
-    }
-    public function render($viewFileName, $data)
-    {
-        extract($data);
-        ob_start();
-        $viewFile = $this->_viewPath . '/' . $viewFileName;
-        if (!is_file($viewFile)) {
-            throw new FileNotFoundException($viewFile, '视图文件丢失');
-        }
-        include($viewFile);
-        $ret = ob_get_clean();
-        return $ret;
-    }
-}
 interface CacheInterface
 {
     public function get($key);
@@ -415,6 +32,47 @@ final class MemcacheX implements CacheInterface
     {
         return $this->_memcacheInstance->delete($key, $timeout);
     }
+}
+function vendor($fileName)
+{
+    static $_vendorArray = [];
+    if (!isset($_vendorArray[$fileName])) {
+        $file = ROOT . '/library/vendor/' . $fileName;
+        if (!is_file($file)) {
+            throw new FileNotFoundException($file, '第三方类库不存在');
+        } else {
+            require $file;
+        }
+    }
+    return ($_vendorArray[$fileName] = true);
+}
+function mailer($address, $subject, $body)
+{
+    vendor('PHPMailer-master/PHPMailerAutoload.php');
+    $mail = new \PHPMailer();
+    $mailConfig = Application::getInstance()->getConfigInstance()->get('mail');
+    // $mail->SMTPDebug = 3; // Enable verbose debug output
+    $mail->isSMTP();
+    $mail->Host = $mailConfig['host'];
+    $mail->SMTPAuth = true;
+    $mail->Username = $mailConfig['username'];
+    $mail->Password = $mailConfig['password'];
+    $mail->SMTPSecure = 'tls'; // Enable TLS encryption, `ssl` also accepted
+    $mail->Port = $mailConfig['port'];
+    $mail->setFrom($mailConfig['fromAddress'], $mailConfig['fromName']);
+    $mail->addAddress($address);
+    // $mail->addReplyTo('info@example.com', 'Information');
+    // $mail->addCC('cc@example.com');
+    // $mail->addBCC('bcc@example.com');
+    // $mail->addAttachment('/var/tmp/file.tar.gz');
+    $mail->isHTML(true);
+    $mail->Subject = $subject;
+    $mail->Body = $body;
+    // $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
+    if(!$mail->send()) {
+        throw new MailerException($mail->ErrorInfo);
+    }
+    return true;
 }
 interface DatabaseInterface
 {
@@ -688,68 +346,401 @@ final class MysqliX implements DatabaseInterface
         return $commit;
     }
 }
-class StorageException extends \Exception
+final class Application
 {
-    private $_name = null;
-    public function __construct($name, $message, $code = 0)
+    private static $_instance = null;
+    private $_isViewRender = true;
+    private $_configInstance = null;
+    private $_requestInstance = null;
+    private $_responseInstance = null;
+    private $_cacheInstanceArray = [];
+    private $_databaseInstanceArray = [];
+    private $_modelInstanceArray = [];
+    public static function getInstance()
     {
-        $this->_name = $name;
-        parent::__construct($message, $code);
+        if (self::$_instance === null) {
+            self::$_instance = new self();
+        }
+        return self::$_instance;
     }
-    public function getName()
+    public function __construct()
     {
-        return $this->_name;
+        $this->_configInstance = new Config();
+        $this->_requestInstance = new Request();
+        $this->_responseInstance = new Response();
+    }
+    public function disableView()
+    {
+        $this->_isViewRender = false;
+        return $this;
+    }
+    public function bootstrap()
+    {
+        $bootstrapFile = ROOT . '/application/module/' . MODULE . '/Bootstrap.php';
+        if (!is_file($bootstrapFile)) {
+            throw new \Exception($bootstrapFile, 10000);
+        }
+        require $bootstrapFile;
+        if (!class_exists('Bootstrap', false)) {
+            throw new \Exception('Bootstrap', 10001);
+        }
+        $bootstrapInstance = new Bootstrap();
+        $functionArray = get_class_methods($bootstrapInstance);
+        foreach ($functionArray as $function) {
+            if (substr($function, 0, 5) === '_init') {
+                call_user_func([$bootstrapInstance, $function]);
+            }
+        }
+        return $this;
+    }
+    public function run()
+    {
+        $this->_configInstance->load(ROOT . '/application/module/' . MODULE . '/config/' . ENV . '.php');
+        if (SESSION_CACHE_ENABLE) {
+            ini_set('session.gc_probability', 0);
+            session_set_save_handler(new Session(), true);
+        } else {
+            ini_set('session.gc_probability', 1);
+        }
+        ini_set('session.auto_start', 0);
+        session_start();
+        $routerInstance = new Router();
+        $routerInstance->route();
+        unset($routerInstance);
+        $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
+        $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
+        if (!is_file($controllerFile)) {
+            throw new \Exception($controllerFile, 10002);
+        }
+        require $controllerFile;
+        if (!class_exists($controller, false)) {
+            throw new \Exception($controller, 10003);
+        }
+        $controllerInstance = new $controller();
+        $action = $this->_requestInstance->getActionName() . 'Action';
+        if (!method_exists($controllerInstance, $action)) {
+            throw new \Exception($action, 10004);
+        }
+        $ret = call_user_func([$controllerInstance, $action]);
+        unset($controllerInstance);
+        if ($this->_isViewRender) {
+            $viewInstance = new View();
+            $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
+            unset($viewInstance);
+        }
+        $this->_responseInstance->setBody($ret);
+        $this->_responseInstance->output();
+    }
+    public function getConfigInstance()
+    {
+        return $this->_configInstance;
+    }
+    public function getRequestInstance()
+    {
+        return $this->_requestInstance;
+    }
+    public function getResponseInstance()
+    {
+        return $this->_responseInstance;
+    }
+    public function getCacheInstance($driverName = null)
+    {
+        $driverName = $driverName === null ? ucfirst(Application::getInstance()->getConfigInstance()->get('cache.driver')) : $driverName;
+        if (!isset($this->_cacheInstanceArray[$driverName])) {
+            $this->_cacheInstanceArray[$driverName] = new $driverName();
+        }
+        return $this->_cacheInstanceArray[$driverName];
+    }
+    public function getDatabaseInstance($driverName = null)
+    {
+        $driverName = $driverName === null ? ucfirst(Application::getInstance()->getConfigInstance()->get('database.driver')) : $driverName;
+        if (!isset($this->_databaseInstanceArray[$driverName])) {
+            $this->_databaseInstanceArray[$driverName] = new $driverName();
+        }
+        return $this->_databaseInstanceArray[$driverName];
+    }
+    public function getModelInstance($modelName)
+    {
+        $modelName = ucfirst($modelName) . 'Model';
+        if (!isset($this->_modelInstanceArray[$modelName])) {
+            $modelFile = ROOT . '/application/model/' . $modelName . '.php';
+            if (!is_file($modelFile)) {
+                throw new \Exception($modelFile, 10005);
+            }
+            require $modelFile;
+            if (!class_exists($modelName, false)) {
+                throw new \Exception($modelName, 10006);
+            }
+            $this->_modelInstanceArray[$modelName] = new $modelName();
+        }
+        return $this->_modelInstanceArray[$modelName];
     }
 }
-class MailerException extends \Exception
+final class Config
 {
-    public function __construct($message, $code = 0)
+    private $_configArray = null;
+    public function load($file)
     {
-        parent::__construct($message, $code);
+        if (!is_file($file)) {
+            throw new \Exception($file, 10007);
+        }
+        $config = include $file;
+        if ($this->_configArray === null) {
+            $this->_configArray = $config;
+        } else {
+            $this->_configArray = array_merge($this->_configArray, $config);
+        }
+    }
+    public function get($key = null)
+    {
+        $ret = null;
+        if ($key === null) {
+            $ret = $this->_configArray;
+        } elseif (strpos($key, '.') > 0) {
+            $array = explode('.', $key);
+            switch (count($array)) {
+                case 2:
+                    $ret = $this->_configArray[$array[0]][$array[1]] === null ? null : $this->_configArray[$array[0]][$array[1]];
+                    break;
+                case 3:
+                    $ret = $this->_configArray[$array[0]][$array[1]][$array[2]] === null ? null : $this->_configArray[$array[0]][$array[1]][$array[2]];
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            $ret = $this->_configArray[$key] === null ? null : $this->_configArray[$key];
+        }
+        if ($ret === null) {
+            throw new \Exception($key, 10008);
+        }
+        return $ret;
     }
 }
-class UndefinedException extends \Exception
+abstract class ControllerAbstract
 {
-    private $_type = null;
-    private $_name = null;
-    public function __construct($type, $name, $message, $code = 0)
+    public function json($data)
     {
-        $this->_type = $type;
-        $this->_name = $name;
-        parent::__construct($message, $code);
+        // 关闭视图
+        Application::getInstance()->disableView();
+        // 设置 json 响应头
+        Application::getInstance()->getResponseInstance()->setHeader('Content-Type', 'application/json;charset=UTF-8', true, 200);
+        // json 格式（成功状态）
+        return json_encode([
+            'status' => true,
+            'code' => '',
+            'data' => $data
+        ]);
     }
-    public function getType()
+    public function image($data)
     {
-        return $this->_type;
+        // 关闭视图
+        Application::getInstance()->disableView();
+        // 设置 image 响应头
+        Application::getInstance()->getResponseInstance()->setHeader('Content-Type', 'image/jpeg', true, 200);
+        return $data;
     }
-    public function getName()
+    public function redirect($url)
     {
-        return $this->_name;
+        // 关闭视图
+        Application::getInstance()->disableView();
+        // 设置重定向响应头
+        Application::getInstance()->getResponseInstance()->setHeader('Location', $url);
+        return true;
     }
 }
-class FileNotFoundException extends \Exception
+abstract class ModelAbstract
 {
-    protected $_filePath = null;
-    public function __construct($filePath, $message, $code = 0)
+    protected $_databaseInstance = null;
+    public function __construct()
     {
-        $this->_filePath = $filePath;
-        parent::__construct($message, $code);
-    }
-    public function getFilePath()
-    {
-        return $this->_filePath;
+        $this->_databaseInstance = Application::getInstance()->getDatabaseInstance();
     }
 }
-class HttpException extends \Exception
+final class Request
 {
-    private $_statusCode = null;
-    public function __construct($statusCode, $message, $code = 0)
+    private $_method = null;
+    private $_controllerName = null;
+    private $_actionName = null;
+    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
     {
-        $this->_statusCode = $statusCode;
-        parent::__construct($message, $code);
+        if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
+            return null;
+        }
+        $data = null;
+        eval('$data = $_' . strtoupper($source) . ';');
+        if ($key === null) {
+            return $data;
+        }
+        if (!isset($data[$key])) {
+            return $default;
+        }
+        $value = $data[$key];
+        if ($filter !== null) {
+            if (strpos($filter, '/') === 0) {
+                $value = preg_match($filter, $value) ? $value : $default;
+            } else {
+                $value = call_user_func($filter, $value);
+            }
+        }
+        return $value;
     }
-    public function getStatusCode()
+    public function getMethod()
     {
-        return $this->_statusCode;
+        if ($this->_method === null) {
+            $method = $this->getGlobalVariable('server', 'REQUEST_METHOD');
+            if ($method) {
+                $this->_method = strtoupper($method);
+            } else {
+                $sapi = php_sapi_name();
+                if (strtolower($sapi) === 'cli' || strtolower(substr($sapi, 0, 3)) === 'cgi') {
+                    $this->_method = 'CLI';
+                } else {
+                    $this->_method = 'UNKNOWN';
+                }
+            }
+        }
+        return $this->_method;
+    }
+    public function isCli()
+    {
+        return $this->getMethod() === 'CLI';
+    }
+    public function setControllerName($controllerName)
+    {
+        $this->_controllerName = $controllerName;
+        return $this;
+    }
+    public function setActionName($actionName)
+    {
+        $this->_actionName = $actionName;
+        return $this;
+    }
+    public function getControllerName()
+    {
+        return $this->_controllerName;
+    }
+    public function getActionName()
+    {
+        return $this->_actionName;
+    }
+}
+final class Response
+{
+    private $_headerArray = [];
+    private $_body = null;
+    public function __construct()
+    {
+        // 正常渲染视图的请求会使用这个默认的响应头
+        // ControllerAbstract 中的 json() / image() 会使用自己覆盖后的响应头，redirect() 的 Location 在这之后，所以不会存在跳转不了的问题
+        $this->setHeader('Content-Type', 'text/html;charset=UTF-8', true, 200);
+    }
+    public function setHeader($name, $value, $replace = true, $code = 0)
+    {
+        if ($replace === true) {
+            foreach ($this->_headerArray as $k => $v) {
+                if ($v['name'] === $name) {
+                    unset($this->_headerArray[$k]);
+                }
+            }
+        }
+        $this->_headerArray[] = [
+            'name' => $name,
+            'value' => $value,
+            'replace' => $replace,
+            'code' => $code
+        ];
+    }
+    public function setBody($content)
+    {
+        $this->_body = $content;
+    }
+    public function sendHeaders()
+    {
+        foreach ($this->_headerArray as $header) {
+            if ($header['code'] !== 0) {
+                header(
+                    $header['name'] . ':' . $header['value'],
+                    $header['replace'],
+                    $header['code']
+                );
+            } else {
+                header(
+                    $header['name'] . ':' . $header['value'],
+                    $header['replace']
+                );
+            }
+        }
+    }
+    public function output()
+    {
+        $this->sendHeaders();
+        exit($this->_body);
+    }
+}
+final class Router
+{
+    const DEFAULT_CONTROLLER_NAME = 'index';
+    const DEFAULT_ACTION_NAME = 'index';
+    public function route()
+    {
+        $controllerName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'c', self::DEFAULT_CONTROLLER_NAME);
+        $actionName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'a', self::DEFAULT_ACTION_NAME);
+        $controllerName = preg_match('/^[a-z]+$/', $controllerName) ? $controllerName : self::DEFAULT_CONTROLLER_NAME;
+        $actionName = preg_match('/^[a-zA-Z]+$/', $actionName) ? $actionName : self::DEFAULT_ACTION_NAME;
+        Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
+    }
+}
+final class Session implements \SessionHandlerInterface
+{
+    private $_cacheInstance = null;
+    public function __construct()
+    {
+        $this->_cacheInstance = Application::getInstance()->getCacheInstance();
+    }
+    public function open($savePath, $sessionName)
+    {
+        return true;
+    }
+    public function read($sessionId)
+    {
+        return $this->_cacheInstance->get('sess-' . $sessionId);
+    }
+    public function write($sessionId, $sessionData)
+    {
+        $this->_cacheInstance->set('sess-' . $sessionId, $sessionData, SESSION_CACHE_TIMEOUT);
+    }
+    public function close()
+    {
+        return true;
+    }
+    public function destroy($sessionId)
+    {
+        $this->_cacheInstance->delete('sess-' . $sessionId);
+    }
+    public function gc($maxLifetime)
+    {
+        return false;
+    }
+}
+final class View
+{
+    private $_viewPath = null;
+    public function __construct()
+    {
+        // 暂时默认视图到这里（目前不提供 setViewPath()，也不支持第三方如 smarty / volt 等模版引擎，将来可扩展）
+        $this->_viewPath = ROOT . '/application/module/' . MODULE . '/view/' . Application::getInstance()->getRequestInstance()->getControllerName();
+    }
+    public function render($viewFileName, $data)
+    {
+        extract($data);
+        ob_start();
+        $viewFile = $this->_viewPath . '/' . $viewFileName;
+        if (!is_file($viewFile)) {
+            throw new FileNotFoundException($viewFile, '视图文件丢失');
+        }
+        include($viewFile);
+        $ret = ob_get_clean();
+        return $ret;
     }
 }

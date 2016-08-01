@@ -84,13 +84,47 @@ final class Application
     }
 
     /**
+     * 应用初始化
+     *
+     * 执行当前应用目录下的 Bootstrap 类中所有以 _init 开头的方法
+     *
+     * @return Application
+     * @throws Exception
+     */
+    public function bootstrap()
+    {
+        $bootstrapFile = ROOT . '/application/module/' . MODULE . '/Bootstrap.php';
+        if (!is_file($bootstrapFile)) {
+            throw new \Exception($bootstrapFile, 10000);
+        }
+        require $bootstrapFile;
+        if (!class_exists('Bootstrap', false)) {
+            throw new \Exception('Bootstrap', 10001);
+        }
+
+        $bootstrapInstance = new Bootstrap();
+        $functionArray = get_class_methods($bootstrapInstance);
+        foreach ($functionArray as $function) {
+            if (substr($function, 0, 5) === '_init') {
+                call_user_func([$bootstrapInstance, $function]);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * 执行应用
      *
-     * @throws FileNotFoundException
-     * @throws UndefinedException
+     * @throws Exception
      */
     public function run()
     {
+        /**
+         * 导入应用配置
+         */
+        $this->_configInstance->load(ROOT . '/application/module/' . MODULE . '/config/' . ENV . '.php');
+
         /**
          * 初始化 SESSION
          */
@@ -117,17 +151,20 @@ final class Application
         $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
-            throw new FileNotFoundException($controllerFile, '控制器文件丢失');
+            throw new \Exception($controllerFile, 10002);
         }
         require $controllerFile;
-
-        $action = $this->_requestInstance->getActionName() . 'Action';
-        $controllerInstance = new $controller();
-        if (!method_exists($controllerInstance, $action)) {
-            throw new UndefinedException('function', $action, '控制器 ' . $controller . ' 下未定义动作');
+        if (!class_exists($controller, false)) {
+            throw new \Exception($controller, 10003);
         }
 
-        $ret = $controllerInstance->$action();
+        $controllerInstance = new $controller();
+        $action = $this->_requestInstance->getActionName() . 'Action';
+        if (!method_exists($controllerInstance, $action)) {
+            throw new \Exception($action, 10004);
+        }
+
+        $ret = call_user_func([$controllerInstance, $action]);
         unset($controllerInstance);
 
         /**
@@ -217,8 +254,7 @@ final class Application
      *
      * @param string $modelName
      * @return ModelAbstract
-     * @throws FileNotFoundException
-     * @throws UndefinedException
+     * @throws Exception
      */
     public function getModelInstance($modelName)
     {
@@ -227,13 +263,13 @@ final class Application
         if (!isset($this->_modelInstanceArray[$modelName])) {
             $modelFile = ROOT . '/application/model/' . $modelName . '.php';
             if (!is_file($modelFile)) {
-                throw new FileNotFoundException($modelFile, '模型文件丢失');
+                throw new \Exception($modelFile, 10005);
             }
             require $modelFile;
-
             if (!class_exists($modelName, false)) {
-                throw new UndefinedException('class', $modelName, '模型类未定义');
+                throw new \Exception($modelName, 10006);
             }
+
             $this->_modelInstanceArray[$modelName] = new $modelName();
         }
 

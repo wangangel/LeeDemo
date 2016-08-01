@@ -30,6 +30,8 @@ function vendor($fileName)
 }
 
 /**
+ * 发送邮件
+ *
  * @param string $address
  * @param string $subject
  * @param string $body

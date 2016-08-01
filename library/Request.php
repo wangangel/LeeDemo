@@ -103,17 +103,12 @@ final class Request
     /**
      * 设置控制器名称
      *
-     * 原先有 $isRouted 协助判断是否路由过来禁止路由之后再次修改 controllerName
-     * 现在去掉这个限制，这样可以在 afterRoute Hook 中再次修改来定位到其它的 Controller，提供了一定的自由度
-     *
      * @param string $controllerName
      * @return object
-     * @throws \Exception
      */
     public function setControllerName($controllerName)
     {
         $this->_controllerName = $controllerName;
-
         return $this;
     }
 
@@ -124,12 +119,10 @@ final class Request
      *
      * @param string $actionName
      * @return object
-     * @throws \Exception
      */
     public function setActionName($actionName)
     {
         $this->_actionName = $actionName;
-
         return $this;
     }
 
