@@ -418,7 +418,7 @@ final class Application
         if (!class_exists($controller, false)) {
             throw new \Exception($controller, 10003);
         }
-        $controllerInstance = new $controller();
+        $controllerInstance = new $controller($requestInstance, $responseInstance);
         $action = $requestInstance->getActionName() . 'Action';
         if (!method_exists($controllerInstance, $action)) {
             throw new \Exception($action, 10004);
@@ -557,6 +557,7 @@ abstract class ControllerAbstract
 abstract class ModelAbstract
 {
     protected $_databaseInstance = null;
+    protected $_tableName = '';
     public function __construct()
     {
         $this->_databaseInstance = Application::getInstance()->getDatabaseInstance();

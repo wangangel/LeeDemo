@@ -23,7 +23,7 @@ class PublishController extends ControllerAbstract
         if (isset($_SESSION['user'])) {
             $this->_user = $_SESSION['user'];
         } else {
-            throw new HttpException(404, '您尚未登录');
+            throw new \Exception('您尚未登录', 10032);
         }
     }
 
@@ -33,7 +33,7 @@ class PublishController extends ControllerAbstract
     public function postAddAction()
     {
         // 分类列表
-        $categories = M('postCategory')->getNormalListByUserId($this->_user['id']);
+        $categories = Application::getInstance()->getModelInstance('postCategory')->getNormalListByUserId($this->_user['id']);
 
         return [
             'user' => $this->_user,

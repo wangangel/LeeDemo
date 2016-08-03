@@ -155,7 +155,7 @@ final class Application
             throw new \Exception($controller, 10003);
         }
 
-        $controllerInstance = new $controller();
+        $controllerInstance = new $controller($requestInstance, $responseInstance);
         $action = $requestInstance->getActionName() . 'Action';
         if (!method_exists($controllerInstance, $action)) {
             throw new \Exception($action, 10004);

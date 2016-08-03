@@ -221,7 +221,7 @@ class AccessController extends ControllerAbstract
         $_SESSION['user'] = $user;
 
         return $this->json($responseInstance, [
-            'email' => $email
+            'userId' => $user['id']
         ]);
     }
 

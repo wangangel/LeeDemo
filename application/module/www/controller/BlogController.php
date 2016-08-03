@@ -9,26 +9,31 @@
 class BlogController extends ControllerAbstract
 {
     /**
-     * @var array|null 当前博主
+     * @var array 当前博主
      */
     private $_user = null;
 
     /**
      * 构造器
      *
-     * @throws HttpException
+     * @param Request $requestInstance
+     * @param Response $responseInstance
+     * @throws Exception
      */
-    public function __construct()
+    public function __construct(Request $requestInstance, Response $responseInstance)
     {
-        $userId = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'userId', 0, 'intval');
+        $userId = $requestInstance->getGlobalVariable('get', 'userId', 0, 'intval');
 
         // 博主
         $user = Application::getInstance()->getModelInstance('user')->getById($userId);
         if ($user === false) {
-            throw new HttpException(404, '用户信息获取失败');
+            throw new \Exception('用户信息获取失败', 10029);
         }
-        if (empty($user) || intval($user['status']) !== UserModel::STATUS_NORMAL) {
-            throw new HttpException(404, '用户不存在或状态异常');
+        if (empty($user)) {
+            throw new \Exception('用户不存在', 10030);
+        }
+        if (intval($user['status']) !== UserModel::STATUS_NORMAL) {
+            throw new \Exception('用户状态异常', 10031);
         }
 
         $this->_user = $user;
@@ -36,44 +41,53 @@ class BlogController extends ControllerAbstract
 
     /**
      * 首页
+     *
+     * @param Request $requestInstance
+     * @param Response $responseInstance
+     * @return array
      */
-    public function indexAction()
+    public function indexAction(Request $requestInstance, Response $responseInstance)
     {
-        // todo
+        return [
+            'user' => $this->_user
+        ];
     }
 
     /**
      * 日志列表
      *
-     * @throws HttpException
+     * @param Request $requestInstance
+     * @param Response $responseInstance
+     * @throws Exception
+     * @return array
      */
-    public function postListAction()
+    public function postListAction(Request $requestInstance, Response $responseInstance)
     {
-        $categoryId = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'categoryId', 0, 'intval');
-        $page = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'page', 1, 'intval');
+        $categoryId = $requestInstance->getGlobalVariable('get', 'categoryId', 0, 'intval');
+        $page = $requestInstance->getGlobalVariable('get', 'page', 1, 'intval');
 
         // 当前分类
         $category = [];
         if ($categoryId !== 0) {
             $category = Application::getInstance()->getModelInstance('postCategory')->getOwnerById($categoryId, $this->_user['id']);
             if ($category === false) {
-                throw new HttpException(404, '分类获取失败');
+                throw new \Exception(404, '分类获取失败');
             }
             if (empty($category) || intval($category['status']) !== PostCategoryModel::STATUS_NORMAL) {
-                throw new HttpException(404, '分类不存在或状态异常');
+                throw new \Exception(404, '分类不存在或状态异常');
             }
         }
 
         // 日志列表
         $data = Application::getInstance()->getModelInstance('post')->getPagedList($page, $this->_user['id'], $categoryId, PostModel::STATUS_NORMAL);
         if ($data === false) {
-            throw new HttpException(404, '日志列表获取失败');
+            throw new \Exception(404, '日志列表获取失败');
         }
 
         // 分类列表
         $categoryList = Application::getInstance()->getModelInstance('postCategory')->getNormalListByUserId($this->_user['id']);
         if ($categoryList === false) {
-            throw new HttpException(404, '分类列表获取失败');
+            throw new \Exception(404, '分类列表获取失败');
         }
 
         return [

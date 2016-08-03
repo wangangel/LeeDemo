@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>发送验证邮件 - 注册</title>
-    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/vendor/bootstrap-3.3.5-dist/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/css/style.css">
 </head>
 <body>
@@ -34,9 +34,9 @@
             </div>
         </div>
     </div>
-    <script src="/js/jquery-3.1.0.min.js"></script>
-    <script src="/js/jquery.validate.min.js"></script>
-    <script src="/js/additional-methods.min.js"></script>
+    <script src="/vendor/jquery/jquery-3.1.0.min.js"></script>
+    <script src="/vendor/jquery-validation-1.15.0-dist/jquery.validate.min.js"></script>
+    <script src="/vendor/jquery-validation-1.15.0-dist/additional-methods.min.js"></script>
     <script>
         $('#registerForm').validate({
             onsubmit: true,
