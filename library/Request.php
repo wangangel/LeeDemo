@@ -104,7 +104,7 @@ final class Request
      * 设置控制器名称
      *
      * @param string $controllerName
-     * @return object
+     * @return Request
      */
     public function setControllerName($controllerName)
     {
@@ -118,7 +118,7 @@ final class Request
      * $isRouted 判断已去除，原因同上
      *
      * @param string $actionName
-     * @return object
+     * @return Request
      */
     public function setActionName($actionName)
     {

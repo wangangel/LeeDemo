@@ -24,16 +24,6 @@ final class Application
     private $_configInstance = null;
 
     /**
-     * @var Request|null 请求对象
-     */
-    private $_requestInstance = null;
-
-    /**
-     * @var Response|null 响应对象
-     */
-    private $_responseInstance = null;
-
-    /**
      * @var array 缓存驱动对象数组
      */
     private $_cacheInstanceArray = [];
@@ -51,14 +41,13 @@ final class Application
     /**
      * 获取当前类对象
      *
-     * @return Application|null
+     * @return Application
      */
     public static function getInstance()
     {
         if (self::$_instance === null) {
             self::$_instance = new self();
         }
-
         return self::$_instance;
     }
 
@@ -68,8 +57,6 @@ final class Application
     public function __construct()
     {
         $this->_configInstance = new Config();
-        $this->_requestInstance = new Request();
-        $this->_responseInstance = new Response();
     }
 
     /**
@@ -139,16 +126,21 @@ final class Application
         session_start();
 
         /**
+         * Request
+         */
+        $requestInstance = new Request();
+
+        /**
          * 执行路由
          */
         $routerInstance = new Router();
-        $routerInstance->route();
+        $routerInstance->route($requestInstance);
         unset($routerInstance);
 
         /**
          * 执行分发
          */
-        $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
+        $controller = ucfirst($requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
             throw new \Exception($controllerFile, 10002);
@@ -159,7 +151,7 @@ final class Application
         }
 
         $controllerInstance = new $controller();
-        $action = $this->_requestInstance->getActionName() . 'Action';
+        $action = $requestInstance->getActionName() . 'Action';
         if (!method_exists($controllerInstance, $action)) {
             throw new \Exception($action, 10004);
         }
@@ -172,15 +164,22 @@ final class Application
          */
         if ($this->_isViewRender) {
             $viewInstance = new View();
-            $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
+            $ret = $viewInstance
+                ->setViewPath(ROOT . '/application/module/' . MODULE . '/view/' . $requestInstance->getControllerName())
+                ->render($requestInstance->getActionName() . '.php', $ret);
             unset($viewInstance);
         }
-        $this->_responseInstance->setBody($ret);
+
+        /**
+         * unset Request
+         */
+        unset($requestInstance);
 
         /**
          * 执行响应
          */
-        $this->_responseInstance->output();
+        $responseInstance = new Response();
+        $responseInstance->setBody($ret)->output();
     }
 
     /**
@@ -191,26 +190,6 @@ final class Application
     public function getConfigInstance()
     {
         return $this->_configInstance;
-    }
-
-    /**
-     * 获取请求对象
-     *
-     * @return Request|null
-     */
-    public function getRequestInstance()
-    {
-        return $this->_requestInstance;
-    }
-
-    /**
-     * 获取响应对象
-     *
-     * @return Response|null
-     */
-    public function getResponseInstance()
-    {
-        return $this->_responseInstance;
     }
 
     /**

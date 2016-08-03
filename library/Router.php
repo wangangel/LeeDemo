@@ -20,15 +20,17 @@ final class Router
 
     /**
      * 最简单的路由
+     *
+     * @param Request $requestInstance
      */
-    public function route()
+    public function route(Request $requestInstance)
     {
-        $controllerName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'c', self::DEFAULT_CONTROLLER_NAME);
-        $actionName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'a', self::DEFAULT_ACTION_NAME);
+        $controllerName = $requestInstance->getGlobalVariable('get', 'c', self::DEFAULT_CONTROLLER_NAME);
+        $actionName = $requestInstance->getGlobalVariable('get', 'a', self::DEFAULT_ACTION_NAME);
 
         $controllerName = preg_match('/^[a-z]+$/', $controllerName) ? $controllerName : self::DEFAULT_CONTROLLER_NAME;
         $actionName = preg_match('/^[a-zA-Z]+$/', $actionName) ? $actionName : self::DEFAULT_ACTION_NAME;
 
-        Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
+        $requestInstance->setControllerName($controllerName)->setActionName($actionName);
     }
 }

@@ -16,22 +16,31 @@ final class Config
     /**
      * 导入配置
      *
-     * load(ROOT . 'application/config/exceptionCode.php')
+     * load(ROOT . 'application/config/exceptionCode.php') / load(['asd' => 123])
      *
-     * @param string $file
+     * @param mixed $source
      * @throws Exception
      */
-    public function load($file)
+    public function load($source)
     {
-        if (!is_file($file)) {
-            throw new \Exception($file, 10007);
-        }
-        $config = include $file;
-
-        if ($this->_configArray === null) {
-            $this->_configArray = $config;
+        $config = null;
+        if (is_string($source)) {
+            if (!is_file($source)) {
+                throw new \Exception($source, 10007);
+            }
+            $config = include $source;
+        } elseif (is_array($source)) {
+            $config = $source;
         } else {
-            $this->_configArray = array_merge($this->_configArray, $config);
+            throw new \Exception($source, 10018);
+        }
+
+        if ($config !== null) {
+            if ($this->_configArray === null) {
+                $this->_configArray = $config;
+            } else {
+                $this->_configArray = array_merge($this->_configArray, $config);
+            }
         }
     }
 

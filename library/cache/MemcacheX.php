@@ -16,20 +16,26 @@ final class MemcacheX implements CacheInterface
     /**
      * 构造器
      *
-     * @throws StorageException
+     * @throws Exception
      */
     public function __construct()
     {
         try {
             $memcached = new \Memcache();
-            $servers = Application::getInstance()->getConfigInstance()->get('cache.servers');
-            foreach ($servers as $server) {
-                $memcached->addServer($server['HOST'], $server['PORT']);
-            }
-            $this->_memcacheInstance = $memcached;
-        } catch (StorageException $e) {
-            throw new StorageException('memcached', $e->getMessage(), $e->getCode());
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), 10010);
         }
+
+        $servers = Application::getInstance()->getConfigInstance()->get('cache.servers');
+        foreach ($servers as $server) {
+            $addServer = $memcached->addServer($server['HOST'], $server['PORT']);
+            if (!$addServer) {
+                // todo: memcache 服务未启动，addServer 居然还是返回 true
+                throw new \Exception('MemcacheX', 10011);
+            }
+        }
+
+        $this->_memcacheInstance = $memcached;
     }
 
     /**

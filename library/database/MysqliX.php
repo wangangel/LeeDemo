@@ -23,7 +23,7 @@ final class MysqliX implements DatabaseInterface
      *
      * @param bool $isMaster
      * @return resource
-     * @throws StorageException
+     * @throws Exception
      */
     public function getConnect($isMaster)
     {
@@ -40,7 +40,7 @@ final class MysqliX implements DatabaseInterface
             $connect = new \Mysqli($config['host'], $config['username'], $config['password'], $config['dbname']);
             $connect->query('SET NAMES ' . $config['charset']);
             if (mysqli_connect_errno()) {
-                throw new StorageException('mysqli', 'getConnect: ' . mysqli_connect_error());
+                throw new \Exception(mysqli_connect_error(), 10012);
             }
             $this->_connectArray[$key] = $connect;
         }
@@ -294,13 +294,13 @@ final class MysqliX implements DatabaseInterface
      * SELECT
      *
      * @return mixed
-     * @throws StorageException
+     * @throws Exception
      */
     public function select()
     {
         $field = isset($this->_data['field']) ? $this->_data['field'] : '*';
         if (!isset($this->_data['table'])) {
-            throw new StorageException('mysqli', 'select: 缺少表名');
+            throw new \Exception('MysqliX', 10013);
         }
         $join = isset($this->_data['join']) ? $this->_data['join'] : '';
         $where = isset($this->_data['where']) ? $this->_data['where'] : '';
@@ -318,12 +318,12 @@ final class MysqliX implements DatabaseInterface
      *
      * @param $data
      * @return mixed
-     * @throws StorageException
+     * @throws Exception
      */
     public function insert($data)
     {
         if (!isset($this->_data['table'])) {
-            throw new StorageException('mysqli', 'inser: 缺少表名');
+            throw new \Exception('MysqliX', 10014);
         }
 
         $keys = implode(', ', array_keys($data));
@@ -343,12 +343,12 @@ final class MysqliX implements DatabaseInterface
      *
      * @param array $data
      * @return bool
-     * @throws StorageException
+     * @throws Exception
      */
     public function update($data)
     {
         if (!isset($this->_data['table'])) {
-            throw new StorageException('mysqli', 'inser: 缺少表名');
+            throw new \Exception('MysqliX', 10015);
         }
         $where = isset($this->_data['where']) ? $this->_data['where'] : '';
 

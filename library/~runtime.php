@@ -11,14 +11,18 @@ final class MemcacheX implements CacheInterface
     {
         try {
             $memcached = new \Memcache();
-            $servers = Application::getInstance()->getConfigInstance()->get('cache.servers');
-            foreach ($servers as $server) {
-                $memcached->addServer($server['HOST'], $server['PORT']);
-            }
-            $this->_memcacheInstance = $memcached;
-        } catch (StorageException $e) {
-            throw new StorageException('memcached', $e->getMessage(), $e->getCode());
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), 10010);
         }
+        $servers = Application::getInstance()->getConfigInstance()->get('cache.servers');
+        foreach ($servers as $server) {
+            $addServer = $memcached->addServer($server['HOST'], $server['PORT']);
+            if (!$addServer) {
+                // todo: memcache 服务未启动，addServer 居然还是返回 true
+                throw new \Exception('MemcacheX', 10011);
+            }
+        }
+        $this->_memcacheInstance = $memcached;
     }
     public function get($key)
     {
@@ -39,7 +43,7 @@ function vendor($fileName)
     if (!isset($_vendorArray[$fileName])) {
         $file = ROOT . '/library/vendor/' . $fileName;
         if (!is_file($file)) {
-            throw new FileNotFoundException($file, '第三方类库不存在');
+            throw new \Exception($file, 10016);
         } else {
             require $file;
         }
@@ -70,7 +74,7 @@ function mailer($address, $subject, $body)
     $mail->Body = $body;
     // $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
     if(!$mail->send()) {
-        throw new MailerException($mail->ErrorInfo);
+        throw new \Exception($mail->ErrorInfo, 10017);
     }
     return true;
 }
@@ -111,7 +115,7 @@ final class MysqliX implements DatabaseInterface
             $connect = new \Mysqli($config['host'], $config['username'], $config['password'], $config['dbname']);
             $connect->query('SET NAMES ' . $config['charset']);
             if (mysqli_connect_errno()) {
-                throw new StorageException('mysqli', 'getConnect: ' . mysqli_connect_error());
+                throw new \Exception(mysqli_connect_error(), 10012);
             }
             $this->_connectArray[$key] = $connect;
         }
@@ -280,7 +284,7 @@ final class MysqliX implements DatabaseInterface
     {
         $field = isset($this->_data['field']) ? $this->_data['field'] : '*';
         if (!isset($this->_data['table'])) {
-            throw new StorageException('mysqli', 'select: 缺少表名');
+            throw new \Exception('MysqliX', 10013);
         }
         $join = isset($this->_data['join']) ? $this->_data['join'] : '';
         $where = isset($this->_data['where']) ? $this->_data['where'] : '';
@@ -293,7 +297,7 @@ final class MysqliX implements DatabaseInterface
     public function insert($data)
     {
         if (!isset($this->_data['table'])) {
-            throw new StorageException('mysqli', 'inser: 缺少表名');
+            throw new \Exception('MysqliX', 10014);
         }
         $keys = implode(', ', array_keys($data));
         foreach ($data as $k => $v) {
@@ -307,7 +311,7 @@ final class MysqliX implements DatabaseInterface
     public function update($data)
     {
         if (!isset($this->_data['table'])) {
-            throw new StorageException('mysqli', 'inser: 缺少表名');
+            throw new \Exception('MysqliX', 10015);
         }
         $where = isset($this->_data['where']) ? $this->_data['where'] : '';
         $array = [];
@@ -351,8 +355,6 @@ final class Application
     private static $_instance = null;
     private $_isViewRender = true;
     private $_configInstance = null;
-    private $_requestInstance = null;
-    private $_responseInstance = null;
     private $_cacheInstanceArray = [];
     private $_databaseInstanceArray = [];
     private $_modelInstanceArray = [];
@@ -366,8 +368,6 @@ final class Application
     public function __construct()
     {
         $this->_configInstance = new Config();
-        $this->_requestInstance = new Request();
-        $this->_responseInstance = new Response();
     }
     public function disableView()
     {
@@ -404,10 +404,11 @@ final class Application
         }
         ini_set('session.auto_start', 0);
         session_start();
+        $requestInstance = new Request();
         $routerInstance = new Router();
-        $routerInstance->route();
+        $routerInstance->route($requestInstance);
         unset($routerInstance);
-        $controller = ucfirst($this->_requestInstance->getControllerName()) . 'Controller';
+        $controller = ucfirst($requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
             throw new \Exception($controllerFile, 10002);
@@ -417,7 +418,7 @@ final class Application
             throw new \Exception($controller, 10003);
         }
         $controllerInstance = new $controller();
-        $action = $this->_requestInstance->getActionName() . 'Action';
+        $action = $requestInstance->getActionName() . 'Action';
         if (!method_exists($controllerInstance, $action)) {
             throw new \Exception($action, 10004);
         }
@@ -425,23 +426,18 @@ final class Application
         unset($controllerInstance);
         if ($this->_isViewRender) {
             $viewInstance = new View();
-            $ret = $viewInstance->render($this->_requestInstance->getActionName() . '.php', $ret);
+            $ret = $viewInstance
+                ->setViewPath(ROOT . '/application/module/' . MODULE . '/view/' . $requestInstance->getControllerName())
+                ->render($requestInstance->getActionName() . '.php', $ret);
             unset($viewInstance);
         }
-        $this->_responseInstance->setBody($ret);
-        $this->_responseInstance->output();
+        unset($requestInstance);
+        $responseInstance = new Response();
+        $responseInstance->setBody($ret)->output();
     }
     public function getConfigInstance()
     {
         return $this->_configInstance;
-    }
-    public function getRequestInstance()
-    {
-        return $this->_requestInstance;
-    }
-    public function getResponseInstance()
-    {
-        return $this->_responseInstance;
     }
     public function getCacheInstance($driverName = null)
     {
@@ -479,16 +475,25 @@ final class Application
 final class Config
 {
     private $_configArray = null;
-    public function load($file)
+    public function load($source)
     {
-        if (!is_file($file)) {
-            throw new \Exception($file, 10007);
-        }
-        $config = include $file;
-        if ($this->_configArray === null) {
-            $this->_configArray = $config;
+        $config = null;
+        if (is_string($source)) {
+            if (!is_file($source)) {
+                throw new \Exception($source, 10007);
+            }
+            $config = include $source;
+        } elseif (is_array($source)) {
+            $config = $source;
         } else {
-            $this->_configArray = array_merge($this->_configArray, $config);
+            throw new \Exception($source, 10018);
+        }
+        if ($config !== null) {
+            if ($this->_configArray === null) {
+                $this->_configArray = $config;
+            } else {
+                $this->_configArray = array_merge($this->_configArray, $config);
+            }
         }
     }
     public function get($key = null)
@@ -654,6 +659,7 @@ final class Response
     public function setBody($content)
     {
         $this->_body = $content;
+        return $this;
     }
     public function sendHeaders()
     {
@@ -682,13 +688,13 @@ final class Router
 {
     const DEFAULT_CONTROLLER_NAME = 'index';
     const DEFAULT_ACTION_NAME = 'index';
-    public function route()
+    public function route(Request $requestInstance)
     {
-        $controllerName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'c', self::DEFAULT_CONTROLLER_NAME);
-        $actionName = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'a', self::DEFAULT_ACTION_NAME);
+        $controllerName = $requestInstance->getGlobalVariable('get', 'c', self::DEFAULT_CONTROLLER_NAME);
+        $actionName = $requestInstance->getGlobalVariable('get', 'a', self::DEFAULT_ACTION_NAME);
         $controllerName = preg_match('/^[a-z]+$/', $controllerName) ? $controllerName : self::DEFAULT_CONTROLLER_NAME;
         $actionName = preg_match('/^[a-zA-Z]+$/', $actionName) ? $actionName : self::DEFAULT_ACTION_NAME;
-        Application::getInstance()->getRequestInstance()->setControllerName($controllerName)->setActionName($actionName);
+        $requestInstance->setControllerName($controllerName)->setActionName($actionName);
     }
 }
 final class Session implements \SessionHandlerInterface
@@ -726,10 +732,10 @@ final class Session implements \SessionHandlerInterface
 final class View
 {
     private $_viewPath = null;
-    public function __construct()
+    public function setViewPath($viewPath)
     {
-        // 暂时默认视图到这里（目前不提供 setViewPath()，也不支持第三方如 smarty / volt 等模版引擎，将来可扩展）
-        $this->_viewPath = ROOT . '/application/module/' . MODULE . '/view/' . Application::getInstance()->getRequestInstance()->getControllerName();
+        $this->_viewPath = $viewPath;
+        return $this;
     }
     public function render($viewFileName, $data)
     {
@@ -737,7 +743,7 @@ final class View
         ob_start();
         $viewFile = $this->_viewPath . '/' . $viewFileName;
         if (!is_file($viewFile)) {
-            throw new FileNotFoundException($viewFile, '视图文件丢失');
+            throw new \Exception($viewFile, 10009);
         }
         include($viewFile);
         $ret = ob_get_clean();

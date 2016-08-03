@@ -11,7 +11,7 @@
  *
  * @param string $fileName
  * @return bool
- * @throws FileNotFoundException
+ * @throws Exception
  */
 function vendor($fileName)
 {
@@ -20,7 +20,7 @@ function vendor($fileName)
     if (!isset($_vendorArray[$fileName])) {
         $file = ROOT . '/library/vendor/' . $fileName;
         if (!is_file($file)) {
-            throw new FileNotFoundException($file, '第三方类库不存在');
+            throw new \Exception($file, 10016);
         } else {
             require $file;
         }
@@ -36,7 +36,7 @@ function vendor($fileName)
  * @param string $subject
  * @param string $body
  * @return bool
- * @throws MailerException
+ * @throws Exception
  */
 function mailer($address, $subject, $body)
 {
@@ -69,7 +69,7 @@ function mailer($address, $subject, $body)
     // $mail->AltBody = 'This is the body in plain text for non-HTML mail clients';
 
     if(!$mail->send()) {
-        throw new MailerException($mail->ErrorInfo);
+        throw new \Exception($mail->ErrorInfo, 10017);
     }
 
     return true;

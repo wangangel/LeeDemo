@@ -24,8 +24,6 @@ class AccessController extends ControllerAbstract
      */
     public function registerMailSendAction()
     {
-        Application::getInstance()->disableView();
-
         $email = Application::getInstance()->getRequestInstance()->getGlobalVariable('post', 'email', null, '/^([a-zA-Z0-9_\.\-]+)\@(qq|163)\.com$/');
         $captcha = Application::getInstance()->getRequestInstance()->getGlobalVariable('post', 'captcha', null, '/^[a-z0-9]{5}$/');
 
@@ -88,8 +86,6 @@ class AccessController extends ControllerAbstract
      */
     public function registerVerifySubmitAction()
     {
-        Application::getInstance()->disableView();
-
         // 已登陆
         if (isset($_SESSION['user'])) {
             $this->redirect('/');
@@ -146,10 +142,21 @@ class AccessController extends ControllerAbstract
 
     /**
      * 登陆 - 提交
+     *
+     * @param Request $requestInstance
+     * @return string
      */
-    public function loginSubmitAction()
+    public function loginSubmitAction(Request $requestInstance)
     {
+        $email = $requestInstance->getGlobalVariable('post', 'email', null, '/^([a-zA-Z0-9_\.\-]+)\@(qq|163)\.com$/');
+        $password = $requestInstance->getGlobalVariable('post', 'password', null, '/^.{5,15}$/');
+        $captcha = $requestInstance->getGlobalVariable('post', 'captcha', null, '/^.{5,15}$/');
 
+        return $this->json([
+            'email' => $email,
+            'password' => $password,
+            'captcha' => $captcha
+        ]);
     }
 
     /**

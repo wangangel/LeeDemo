@@ -64,10 +64,12 @@ final class Response
      * 设置响应的内容
      *
      * @param string $content
+     * @return Response
      */
     public function setBody($content)
     {
         $this->_body = $content;
+        return $this;
     }
 
     /**

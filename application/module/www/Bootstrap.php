@@ -9,7 +9,7 @@
 final class Bootstrap
 {
     /**
-     * 加载异常错误码配置
+     * 导入异常错误码配置文件
      */
     public function _initExceptionConfig()
     {
