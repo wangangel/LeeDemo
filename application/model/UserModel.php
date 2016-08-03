@@ -38,6 +38,23 @@ class UserModel extends ModelAbstract
     }
 
     /**
+     * 根据 nickname 获取用户
+     *
+     * @param string $nickname
+     * @return mixed
+     */
+    public function getByNickname($nickname)
+    {
+        $user = $this->_databaseInstance
+            ->table($this->_tableName)
+            ->where('nickname', 'eq', $nickname)
+            ->limit(1)
+            ->select();
+
+        return $user !== false && !empty($user) ? $user[0] : $user;
+    }
+
+    /**
      * 根据 email 获取用户
      *
      * @param string $email

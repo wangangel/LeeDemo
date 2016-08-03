@@ -40,6 +40,7 @@ class AccessController extends ControllerAbstract
         // post
         $email = $requestInstance->getGlobalVariable('post', 'email', null, '/^([a-zA-Z0-9_\.\-]+)\@(qq|163)\.com$/');
         $captcha = $requestInstance->getGlobalVariable('post', 'captcha', null, '/^[a-z0-9]{5}$/');
+
         if ($email === null || $captcha === null) {
             throw new \Exception('输入内容不完整', 10024);
         }
@@ -124,13 +125,21 @@ class AccessController extends ControllerAbstract
         // post
         $password = $requestInstance->getGlobalVariable('post', 'password', null, '/^[\@A-Za-z0-9\!\#\$\%\^\&\*\.\-\_\~]{5,15}$/');
         $nickname = $requestInstance->getGlobalVariable('post', 'nickname', null, '/^[^\s]{2,15}$/');
+
         if ($password === null || $nickname === null) {
             throw new \Exception('输入内容不完整', 10024);
         }
 
-        // user 入库
         $password = md5($password);
         $nickname = mb_substr(htmlspecialchars($nickname), 0, 15, 'utf-8');
+
+        // nickname 已注册验证
+        $user = Application::getInstance()->getModelInstance('user')->getByNickname($nickname);
+        if ($user !== false && !empty($user)) {
+            throw new \Exception('该昵称已被使用', 10028);
+        }
+
+        // user 入库
         $userId = Application::getInstance()->getModelInstance('user')->addOne($emailVerify['email'], $password, $nickname);
         if ($userId === false) {
             throw new \Exception('注册失败', 10027);
@@ -183,9 +192,12 @@ class AccessController extends ControllerAbstract
         $email = $requestInstance->getGlobalVariable('post', 'email', null, '/^([a-zA-Z0-9_\.\-]+)\@(qq|163)\.com$/');
         $password = $requestInstance->getGlobalVariable('post', 'password', null, '/^.{5,15}$/');
         $captcha = $requestInstance->getGlobalVariable('post', 'captcha', null, '/^[a-z0-9]{5}$/');
+
         if ($email === null || $password === null || $captcha === null) {
             throw new \Exception('输入内容不完整', 10024);
         }
+
+        $password = md5($password);
 
         // 验证码验证
         if ($_SESSION['captcha'] === null || $_SESSION['captcha'] !== strtolower($captcha)) {
@@ -194,8 +206,7 @@ class AccessController extends ControllerAbstract
         $_SESSION['captcha'] = null;
 
         // 用户是否存在
-        $userModelInstance = Application::getInstance()->getModelInstance('user');
-        $user = $userModelInstance->getByEmailAndPassword($email, md5($password));
+        $user = Application::getInstance()->getModelInstance('user')->getByEmailAndPassword($email, $password);
         if ($user === false) {
             throw new \Exception('帐号查询失败', 10020);
         }
