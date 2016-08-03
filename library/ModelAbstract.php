@@ -14,6 +14,11 @@ abstract class ModelAbstract
     protected $_databaseInstance = null;
 
     /**
+     * @var string 当前模型对应的表名
+     */
+    protected $_tableName = '';
+
+    /**
      * 构造器
      */
     public function __construct()

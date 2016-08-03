@@ -8,6 +8,7 @@
 <body>
     <div class="wrap">
         <div class="content">
+            <?php include dirname(__DIR__) . '/top.php' ; ?>
             <div class="header"></div>
             <div class="menu">
                 <ul>

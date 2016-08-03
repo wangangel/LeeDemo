@@ -72,11 +72,11 @@ try {
     Application::getInstance()->bootstrap()->run();
 } catch (\Exception $e) {
     // 因为抛错的可能是任何一个对象，所以这里应该都是原生的方法
-    if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'ajax') {
+    if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
         exit(json_encode(array(
             'status' => false,
-            'code' => $e->getMessage(),
-            'data' => ''
+            'message' => $e->getMessage(),
+            'code' => $e->getCode()
         )));
     } else {
         exit('<ul><li><h3>' . $e->getMessage() . '</h3>' . str_replace('#', '</li><li>#', $e->getTraceAsString()) . '</li></ul>');

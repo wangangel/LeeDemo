@@ -10,38 +10,51 @@ class AccessController extends ControllerAbstract
 {
     /**
      * 注册
+     *
+     * @param Request $requestInstance
+     * @param Response $responseInstance
      */
-    public function registerAction()
+    public function registerAction(Request $requestInstance, Response $responseInstance)
     {
         // 已登陆
         if (isset($_SESSION['user'])) {
-            $this->redirect('/');
+            $this->redirect($responseInstance, '/');
         }
     }
 
     /**
      * 注册 - 发送邮件
+     *
+     * @param Request $requestInstance
+     * @param Response $responseInstance
+     * @return string
+     * @throws Exception
      */
-    public function registerMailSendAction()
+    public function registerMailSendAction(Request $requestInstance, Response $responseInstance)
     {
-        $email = Application::getInstance()->getRequestInstance()->getGlobalVariable('post', 'email', null, '/^([a-zA-Z0-9_\.\-]+)\@(qq|163)\.com$/');
-        $captcha = Application::getInstance()->getRequestInstance()->getGlobalVariable('post', 'captcha', null, '/^[a-z0-9]{5}$/');
-
         // 已登陆
         if (isset($_SESSION['user'])) {
-            $this->redirect('/');
+            $this->redirect($responseInstance, '/');
         }
 
-        // 邮箱验证
-        if ($email === null) {
-            throw new HttpException(404, '无效的邮箱地址');
+        // post
+        $email = $requestInstance->getGlobalVariable('post', 'email', null, '/^([a-zA-Z0-9_\.\-]+)\@(qq|163)\.com$/');
+        $captcha = $requestInstance->getGlobalVariable('post', 'captcha', null, '/^[a-z0-9]{5}$/');
+        if ($email === null || $captcha === null) {
+            throw new \Exception('输入内容不完整', 10024);
         }
 
         // 验证码验证
-        if ($captcha === null || $_SESSION['captcha'] === null || strtolower($captcha) !== $_SESSION['captcha']) {
-            throw new HttpException(404, '验证码校验失败');
+        if ($_SESSION['captcha'] === null || $_SESSION['captcha'] !== strtolower($captcha)) {
+            throw new \Exception('验证码校验失败', 10019);
         }
         $_SESSION['captcha'] = null;
+
+        // email 已注册验证
+        $user = Application::getInstance()->getModelInstance('user')->getByEmail($email);
+        if ($user !== false && !empty($user)) {
+            throw new \Exception('该邮箱已被使用', 10025);
+        }
 
         // 发送邮件
         $token = md5(uniqid(md5(microtime(true) . mt_rand(10000, 99999))));
@@ -58,22 +71,28 @@ class AccessController extends ControllerAbstract
             ];
         }
 
-        return $this->json([
+        return $this->json($responseInstance, [
             'mailer' => $mailer
         ]);
     }
 
     /**
      * 注册 - 邮件验证并完善密码昵称等信息
+     *
+     * @param Request $requestInstance
+     * @param Response $responseInstance
+     * @return array
+     * @throws Exception
      */
-    public function registerVerifyAction()
+    public function registerVerifyAction(Request $requestInstance, Response $responseInstance)
     {
         // 已登陆
         if (isset($_SESSION['user'])) {
-            $this->redirect('/');
+            $this->redirect($responseInstance, '/');
         }
 
-        $tokenGet = Application::getInstance()->getRequestInstance()->getGlobalVariable('get', 'token', null);
+        // url token
+        $tokenGet = $requestInstance->getGlobalVariable('get', 'token', null, '/^[a-z0-9]{32}$/');
 
         return [
             'emailVerify' => $_SESSION['emailVerify'],
@@ -83,61 +102,66 @@ class AccessController extends ControllerAbstract
 
     /**
      * 注册 - 完成
+     *
+     * @param Request $requestInstance
+     * @param Response $responseInstance
+     * @return string
+     * @throws Exception
      */
-    public function registerVerifySubmitAction()
+    public function registerVerifySubmitAction(Request $requestInstance, Response $responseInstance)
     {
         // 已登陆
         if (isset($_SESSION['user'])) {
-            $this->redirect('/');
+            $this->redirect($responseInstance, '/');
         }
 
         // emailVerify session 过期
         if (empty($_SESSION['emailVerify'])) {
-            throw new HttpException(404, '验证邮件已过期');
+            throw new \Exception('验证邮件已过期', 10026);
         }
         $emailVerify = $_SESSION['emailVerify'];
 
-        $password = Application::getInstance()->getRequestInstance()->getGlobalVariable('post', 'password', null, '/^[\@A-Za-z0-9\!\#\$\%\^\&\*\.\~]{6,15}$/');
-        $nickname = Application::getInstance()->getRequestInstance()->getGlobalVariable('post', 'nickname', null, '/^[^\s]+$/');
-
-        // 密码验证
-        if ($password === null) {
-            throw new HttpException(404, '密码格式有误');
-        }
-
-        // 昵称验证
-        if ($nickname === null) {
-            throw new HttpException(404, '昵称格式有误');
+        // post
+        $password = $requestInstance->getGlobalVariable('post', 'password', null, '/^[\@A-Za-z0-9\!\#\$\%\^\&\*\.\-\_\~]{5,15}$/');
+        $nickname = $requestInstance->getGlobalVariable('post', 'nickname', null, '/^[^\s]{2,15}$/');
+        if ($password === null || $nickname === null) {
+            throw new \Exception('输入内容不完整', 10024);
         }
 
         // user 入库
-        $salt = md5(uniqid(md5(mt_rand(10000, 99999))));
-        $password = md5($password . $salt);
-        $userId = Application::getInstance()->getModelInstance('user')->addOne($emailVerify['email'], $password, $salt, $nickname);
+        $password = md5($password);
+        $nickname = mb_substr(htmlspecialchars($nickname), 0, 15, 'utf-8');
+        $userId = Application::getInstance()->getModelInstance('user')->addOne($emailVerify['email'], $password, $nickname);
         if ($userId === false) {
-            throw new HttpException(404, '注册失败');
+            throw new \Exception('注册失败', 10027);
         }
 
         // 清除 emailVerify session
         $_SESSION['emailVerify'] = null;
 
-        // user session
+        // 设置登录 session
         $_SESSION['user'] = [
             'email' => $emailVerify['email'],
             'nickname' => $nickname
         ];
 
-        return $this->json([
+        return $this->json($responseInstance, [
             'userId' => $userId
         ]);
     }
 
     /**
      * 登陆
+     *
+     * @param Request $requestInstance
+     * @param Response $responseInstance
      */
-    public function loginAction()
+    public function loginAction(Request $requestInstance, Response $responseInstance)
     {
-
+        // 已登陆
+        if (isset($_SESSION['user'])) {
+            $this->redirect($responseInstance, '/');
+        }
     }
 
     /**
@@ -146,17 +170,47 @@ class AccessController extends ControllerAbstract
      * @param Request $requestInstance
      * @param Response $responseInstance
      * @return string
+     * @throws Exception
      */
     public function loginSubmitAction(Request $requestInstance, Response $responseInstance)
     {
+        // 已登陆
+        if (isset($_SESSION['user'])) {
+            throw new \Exception('当前已经处于登录状态', 10023);
+        }
+
+        // post
         $email = $requestInstance->getGlobalVariable('post', 'email', null, '/^([a-zA-Z0-9_\.\-]+)\@(qq|163)\.com$/');
         $password = $requestInstance->getGlobalVariable('post', 'password', null, '/^.{5,15}$/');
-        $captcha = $requestInstance->getGlobalVariable('post', 'captcha', null, '/^.{5,15}$/');
+        $captcha = $requestInstance->getGlobalVariable('post', 'captcha', null, '/^[a-z0-9]{5}$/');
+        if ($email === null || $password === null || $captcha === null) {
+            throw new \Exception('输入内容不完整', 10024);
+        }
+
+        // 验证码验证
+        if ($_SESSION['captcha'] === null || $_SESSION['captcha'] !== strtolower($captcha)) {
+            throw new \Exception('验证码校验失败', 10019);
+        }
+        $_SESSION['captcha'] = null;
+
+        // 用户是否存在
+        $userModelInstance = Application::getInstance()->getModelInstance('user');
+        $user = $userModelInstance->getByEmailAndPassword($email, md5($password));
+        if ($user === false) {
+            throw new \Exception('帐号查询失败', 10020);
+        }
+        if (empty($user)) {
+            throw new \Exception('用户名或密码有误', 10021);
+        }
+        if (intval($user['status']) !== UserModel::STATUS_NORMAL) {
+            throw new \Exception('该帐号存在异常', 10022);
+        }
+
+        // 设置登录 session
+        $_SESSION['user'] = $user;
 
         return $this->json($responseInstance, [
-            'email' => $email,
-            'password' => $password,
-            'captcha' => $captcha
+            'email' => $email
         ]);
     }
 

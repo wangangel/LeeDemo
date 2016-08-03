@@ -15,7 +15,7 @@
                         <h3>登录</h3>
                     </div>
                     <form id="loginForm" action="javascript:;">
-                        <div id="alertSuccess" class="alert alert-success" style="display:none;">登录成功！正在为您跳转...</div>
+                        <div id="alertSuccess" class="alert alert-success" style="display:none;"></div>
                         <div id="alertDanger" class="alert alert-danger" style="display:none;"></div>
                         <div class="form-group">
                             <label>邮箱地址</label>
@@ -76,25 +76,41 @@
                     minlength: '验证码长度为 5 位'
                 }
             },
-            highlight: function(element, errorClass, validClass) {
-                $(element).closest('div').addClass('has-error');
+            highlight: function(ele) {
+                $(ele).closest('div').addClass('has-error');
             },
-            unhighlight: function(element, errorClass, validClass) {
-                $(element).closest('div').removeClass('has-error');
+            unhighlight: function(ele) {
+                $(ele).closest('div').removeClass('has-error');
             },
             submitHandler: function() {
+                $('#alertSuccess').hide();
+                $('#alertDanger').hide();
+                $('#submit').attr('disabled', true);
                 $.ajax({
                     async: true,
                     type: 'post',
                     dataType: 'json',
                     url: '/?c=access&a=loginSubmit',
+                    timeout: 5000,
                     data: {
                         email: $('#email').val(),
                         password: $('#password').val(),
                         captcha: $('#captcha').val()
                     },
                     success: function(json) {
-                        console.log(json.data);
+                        if (json.status === true) {
+                            $('#alertSuccess').html('登录成功！正在跳往至首页...').show();
+                            setTimeout('window.location.href = "/"', 1000);
+                        } else {
+                            $('#captchaImage').attr('src', '/?a=captcha&refresh='+Math.random());
+                            $('#alertDanger').html(json.message).show();
+                            $('#submit').attr('disabled', false);
+                        }
+                    },
+                    error: function() {
+                        $('#captchaImage').attr('src', '/?a=captcha&refresh='+Math.random());
+                        $('#alertDanger').html('可能网络异常导致操作失败').show();
+                        $('#submit').attr('disabled', false);
                     }
                 });
             }
