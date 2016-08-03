@@ -18,8 +18,11 @@ class IndexController extends ControllerAbstract
 
     /**
      * 显示验证码
+     *
+     * @param Request $requestInstance
+     * @param Response $responseInstance
      */
-    public function captchaAction()
+    public function captchaAction(Request $requestInstance, Response $responseInstance)
     {
         // 生成二维码
         vendor('Captcha-master/autoload.php');
@@ -29,6 +32,6 @@ class IndexController extends ControllerAbstract
         // session
         $_SESSION['captcha'] = $captcha->getPhrase();
 
-        return $this->image($captcha->get());
+        return $this->image($responseInstance, $captcha->get());
     }
 }

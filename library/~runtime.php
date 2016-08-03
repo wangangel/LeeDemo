@@ -408,6 +408,7 @@ final class Application
         $routerInstance = new Router();
         $routerInstance->route($requestInstance);
         unset($routerInstance);
+        $responseInstance = new Response();
         $controller = ucfirst($requestInstance->getControllerName()) . 'Controller';
         $controllerFile = ROOT . '/application/module/' . MODULE . '/controller/' . $controller . '.php';
         if (!is_file($controllerFile)) {
@@ -422,7 +423,7 @@ final class Application
         if (!method_exists($controllerInstance, $action)) {
             throw new \Exception($action, 10004);
         }
-        $ret = call_user_func([$controllerInstance, $action]);
+        $ret = $controllerInstance->$action($requestInstance, $responseInstance);
         unset($controllerInstance);
         if ($this->_isViewRender) {
             $viewInstance = new View();
@@ -432,7 +433,6 @@ final class Application
             unset($viewInstance);
         }
         unset($requestInstance);
-        $responseInstance = new Response();
         $responseInstance->setBody($ret)->output();
     }
     public function getConfigInstance()
@@ -524,12 +524,12 @@ final class Config
 }
 abstract class ControllerAbstract
 {
-    public function json($data)
+    public function json($responseInstance, $data)
     {
         // 关闭视图
         Application::getInstance()->disableView();
         // 设置 json 响应头
-        Application::getInstance()->getResponseInstance()->setHeader('Content-Type', 'application/json;charset=UTF-8', true, 200);
+        $responseInstance->setHeader('Content-Type', 'application/json;charset=UTF-8', true, 200);
         // json 格式（成功状态）
         return json_encode([
             'status' => true,
@@ -537,20 +537,20 @@ abstract class ControllerAbstract
             'data' => $data
         ]);
     }
-    public function image($data)
+    public function image($responseInstance, $data)
     {
         // 关闭视图
         Application::getInstance()->disableView();
         // 设置 image 响应头
-        Application::getInstance()->getResponseInstance()->setHeader('Content-Type', 'image/jpeg', true, 200);
+        $responseInstance->setHeader('Content-Type', 'image/jpeg', true, 200);
         return $data;
     }
-    public function redirect($url)
+    public function redirect($responseInstance, $url)
     {
         // 关闭视图
         Application::getInstance()->disableView();
         // 设置重定向响应头
-        Application::getInstance()->getResponseInstance()->setHeader('Location', $url);
+        $responseInstance->setHeader('Location', $url);
         return true;
     }
 }

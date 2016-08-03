@@ -131,11 +131,16 @@ final class Application
         $requestInstance = new Request();
 
         /**
-         * 执行路由
+         * 路由解析
          */
         $routerInstance = new Router();
         $routerInstance->route($requestInstance);
         unset($routerInstance);
+
+        /**
+         * Response
+         */
+        $responseInstance = new Response();
 
         /**
          * 执行分发
@@ -156,7 +161,7 @@ final class Application
             throw new \Exception($action, 10004);
         }
 
-        $ret = call_user_func([$controllerInstance, $action]);
+        $ret = $controllerInstance->$action($requestInstance, $responseInstance);
         unset($controllerInstance);
 
         /**
@@ -178,7 +183,6 @@ final class Application
         /**
          * 执行响应
          */
-        $responseInstance = new Response();
         $responseInstance->setBody($ret)->output();
     }
 

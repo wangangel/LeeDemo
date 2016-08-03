@@ -144,15 +144,16 @@ class AccessController extends ControllerAbstract
      * 登陆 - 提交
      *
      * @param Request $requestInstance
+     * @param Response $responseInstance
      * @return string
      */
-    public function loginSubmitAction(Request $requestInstance)
+    public function loginSubmitAction(Request $requestInstance, Response $responseInstance)
     {
         $email = $requestInstance->getGlobalVariable('post', 'email', null, '/^([a-zA-Z0-9_\.\-]+)\@(qq|163)\.com$/');
         $password = $requestInstance->getGlobalVariable('post', 'password', null, '/^.{5,15}$/');
         $captcha = $requestInstance->getGlobalVariable('post', 'captcha', null, '/^.{5,15}$/');
 
-        return $this->json([
+        return $this->json($responseInstance, [
             'email' => $email,
             'password' => $password,
             'captcha' => $captcha
@@ -161,10 +162,14 @@ class AccessController extends ControllerAbstract
 
     /**
      * 退出
+     *
+     * @param Request $requestInstance
+     * @param Response $responseInstance
+     * @return bool
      */
-    public function logoutAction()
+    public function logoutAction(Request $requestInstance, Response $responseInstance)
     {
         session_destroy();
-        return $this->redirect('/');
+        return $this->redirect($responseInstance, '/');
     }
 }
