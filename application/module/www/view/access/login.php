@@ -102,13 +102,13 @@
                             $('#alertSuccess').html('登录成功！正在跳往至首页...').show();
                             setTimeout('window.location.href = "/"', 1000);
                         } else {
-                            $('#captchaImage').attr('src', '/?a=captcha&refresh='+Math.random());
                             $('#alertDanger').html(json.message).show();
                             $('#submit').attr('disabled', false);
                         }
+                        $('#captchaImage').attr('src', '/?a=captcha&refresh=' + Math.random());
                     },
                     error: function() {
-                        $('#captchaImage').attr('src', '/?a=captcha&refresh='+Math.random());
+                        $('#captchaImage').attr('src', '/?a=captcha&refresh=' + Math.random());
                         $('#alertDanger').html('可能网络异常导致操作失败').show();
                         $('#submit').attr('disabled', false);
                     }
