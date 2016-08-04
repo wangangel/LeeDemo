@@ -16,7 +16,7 @@
                         <div class="bx-title">
                             <h3><?php echo $param['categoryId'] === 0 ? '日志列表' : $category['name']; ?></h3>
                             <?php if(isset($_SESSION['user'])): ?>
-                                <em><a href="/?c=publish&a=postAdd">发布日志</a></em>
+                                <em><a href="/?c=personal&a=postAdd">发布日志</a></em>
                             <?php endif; ?>
                         </div>
                         <div class="bx-body">

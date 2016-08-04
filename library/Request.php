@@ -27,16 +27,15 @@ final class Request
      * $_GET / $_POST / $_REQUEST / $_SERVER / $_FILES / $_ENV / $_COOKIE / $_SESSION
      *
      * 1、$source 决定了从那个全局变量获取：get / post / request / server / files / env / cookie / session
-     * 2、参数 $key 不指定则获取该全局变量下的所有值，并且不会设置 $default 默认值和执行 $filter 操作
-     * 3、$filter 以 / 开头则默认为正则，否则视为 function
+     * 2、参数 $key 不指定则获取该全局变量下的所有值，并且不会设置 $default 默认值和执行正则 $pattern 验证
      *
      * @param string $source
      * @param string $key
      * @param mixed $default
-     * @param mixed $filter
+     * @param mixed $pattern
      * @return mixed
      */
-    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
+    public function getGlobalVariable($source, $key = null, $default = null, $pattern = null)
     {
         if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
             return null;
@@ -53,12 +52,8 @@ final class Request
         }
 
         $value = $data[$key];
-        if ($filter !== null) {
-            if (strpos($filter, '/') === 0) {
-                $value = preg_match($filter, $value) ? $value : $default;
-            } else {
-                $value = call_user_func($filter, $value);
-            }
+        if ($pattern !== null) {
+            $value = preg_match($pattern, $value) ? $value : $default;
         }
 
         return $value;

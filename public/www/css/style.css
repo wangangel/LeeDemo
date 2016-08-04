@@ -25,6 +25,7 @@ a:hover {color:red;text-decoration:underline;}
 .BL_main {overflow:hidden;}
 .BL_primary {float:right;width:720px;}
 .BL_sidebar {float:left;width:200px;}
+.personal .BL_content {width:870px;}
 
 
 .icon {display:inline-block;background:url("../images/icons.png");}

@@ -22,7 +22,7 @@ class BlogController extends ControllerAbstract
      */
     public function __construct(Request $requestInstance, Response $responseInstance)
     {
-        $userId = $requestInstance->getGlobalVariable('get', 'userId', 0, 'intval');
+        $userId = $requestInstance->getGlobalVariable('get', 'userId', 0);
 
         // 博主
         $user = Application::getInstance()->getModelInstance('user')->getById($userId);

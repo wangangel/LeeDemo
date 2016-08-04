@@ -568,7 +568,7 @@ final class Request
     private $_method = null;
     private $_controllerName = null;
     private $_actionName = null;
-    public function getGlobalVariable($source, $key = null, $default = null, $filter = null)
+    public function getGlobalVariable($source, $key = null, $default = null, $pattern = null)
     {
         if (!in_array(strtolower($source), ['get', 'post', 'request', 'server', 'files', 'env', 'cookie', 'session'])) {
             return null;
@@ -582,12 +582,8 @@ final class Request
             return $default;
         }
         $value = $data[$key];
-        if ($filter !== null) {
-            if (strpos($filter, '/') === 0) {
-                $value = preg_match($filter, $value) ? $value : $default;
-            } else {
-                $value = call_user_func($filter, $value);
-            }
+        if ($pattern !== null) {
+            $value = preg_match($pattern, $value) ? $value : $default;
         }
         return $value;
     }

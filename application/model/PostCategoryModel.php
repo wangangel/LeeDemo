@@ -16,6 +16,11 @@ class PostCategoryModel extends ModelAbstract
     const STATUS_DELETE = 3;    // 已删除
 
     /**
+     * @var string 表名
+     */
+    protected $_tableName = 'post_category';
+
+    /**
      * 根据 id 和 user_id 获取分类
      *
      * @param int $categoryId
@@ -25,7 +30,7 @@ class PostCategoryModel extends ModelAbstract
     public function getOwnerById($categoryId, $userId)
     {
         $postCategory = $this->_databaseInstance
-            ->table('post_category')
+            ->table($this->_tableName)
             ->where([
                 'and' => [
                     ['id', 'eq', $categoryId],
@@ -47,7 +52,7 @@ class PostCategoryModel extends ModelAbstract
     public function getNormalListByUserId($userId)
     {
         return $this->_databaseInstance
-            ->table('post_category')
+            ->table($this->_tableName)
             ->where([
                 'and' => [
                     ['user_id', 'eq', $userId],
@@ -77,7 +82,7 @@ class PostCategoryModel extends ModelAbstract
         }
 
         return $this->_databaseInstance
-            ->table('post_category')
+            ->table($this->_tableName)
             ->where('id', 'eq', $categoryId)
             ->update([
                 'count_normal_post' => $update

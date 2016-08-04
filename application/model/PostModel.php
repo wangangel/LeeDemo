@@ -132,6 +132,8 @@ class PostModel extends ModelAbstract
 
         // todo: 敏感词检查
 
+        // todo: 当天发布次数限制
+
         // 插入 post
         $postId = $this->addOne($categoryId, $userId, $title, substr($body, 0, 250));
         if ($postId === false) {
@@ -139,21 +141,23 @@ class PostModel extends ModelAbstract
         }
 
         // 插入 post_body
-        $postBodyId = M('postBody')->addOne($postId, $body);
+        $postBodyId = Application::getInstance()->getModelInstance('postBody')->addOne($postId, $body);
         if ($postBodyId === false) {
             $this->_databaseInstance->rollback();
             return false;
         }
 
-        // 更新 post_category 正常日志计数
-        $updateCategoryCount = M('postCategory')->updateNormalPostCount($categoryId, 1);
-        if ($updateCategoryCount === false) {
-            $this->_databaseInstance->rollback();
-            return false;
+        // 更新 post_category 正常日志计数（如果指定了分类 $categoryId 的话）
+        if ($categoryId !== 0) {
+            $updateCategoryCount = Application::getInstance()->getModelInstance('postCategory')->updateNormalPostCount($categoryId, 1);
+            if ($updateCategoryCount === false) {
+                $this->_databaseInstance->rollback();
+                return false;
+            }
         }
 
         // 更新 user 正常日志计数
-        $updateUserCount = M('user')->updateNormalPostCount($userId, 1);
+        $updateUserCount = Application::getInstance()->getModelInstance('user')->updateNormalPostCount($userId, 1);
         if ($updateUserCount === false) {
             $this->_databaseInstance->rollback();
             return false;
@@ -161,14 +165,14 @@ class PostModel extends ModelAbstract
 
         // 插入或更新 post_log 本日日志记录
         $days = date('Y-m-d');
-        $postLog = M('postLog')->getOwnerByDays($days, $userId);
+        $postLog = Application::getInstance()->getModelInstance('postLog')->getOwnerByDays($days, $userId);
         if ($postLog === false) {
             $this->_databaseInstance->rollback();
             return false;
         }
         $postLogId = 0;
         if (empty($postLog)) {
-            $postLogId = M('postLog')->addOne($days, $userId);
+            $postLogId = Application::getInstance()->getModelInstance('postLog')->addOne($days, $userId);
             if ($postLogId === false) {
                 $this->_databaseInstance->rollback();
                 return false;
@@ -176,7 +180,7 @@ class PostModel extends ModelAbstract
         } else {
             $postLogId = $postLog['id'];
         }
-        $updateLogCount = M('postLog')->updatePostCount($postLogId, 1);
+        $updateLogCount = Application::getInstance()->getModelInstance('postLog')->updatePostCount($postLogId, 1);
         if ($updateLogCount === false) {
             $this->_databaseInstance->rollback();
             return false;
