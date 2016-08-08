@@ -4,44 +4,42 @@
     <meta charset="UTF-8">
     <title>完善注册信息 - 注册</title>
     <link rel="stylesheet" type="text/css" href="/vendor/bootstrap-3.3.5-dist/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/asset/v1.0/css/style.css">
 </head>
 <body>
-    <div class="BL_wrap">
-        <div class="BL_content">
-            <div class="BL_main">
-                <div class="access-form">
-                    <div class="page-header">
-                        <h3>注册 <small>完善帐号信息</small></h3>
-                    </div>
-                    <?php if($emailVerify['token'] !== $tokenGet): ?>
-                        <div class="alert alert-danger">验证邮件校验失败！您可以尝试 <a href="/?c=access&a=register">重新发送</a></div>
-                    <?php else: ?>
-                        <form id="registerVerifyForm" action="javascript:;">
-                            <div id="alertSuccess" class="alert alert-success" style="display:none;"></div>
-                            <div id="alertDanger" class="alert alert-danger" style="display:none;"></div>
-                            <div class="form-group">
-                                <label>邮箱地址</label>
-                                <input class="form-control" type="text" value="<?php echo $emailVerify['email']; ?>" readonly disabled>
-                            </div>
-                            <div class="form-group">
-                                <label>密码</label>
-                                <input id="password" name="password" class="form-control" type="password" maxlength="15">
-                            </div>
-                            <div class="form-group">
-                                <label>再输一次密码</label>
-                                <input id="passwordConfirm" name="passwordConfirm" class="form-control" type="password" maxlength="15">
-                            </div>
-                            <div class="form-group">
-                                <label>昵称</label>
-                                <input id="nickname" name="nickname" class="form-control" type="text" maxlength="15">
-                            </div>
-                            <div class="form-group">
-                                <input id="submit" class="btn btn-primary" type="submit" value="完成注册">
-                            </div>
-                        </form>
-                    <?php endif; ?>
+    <div class="wrap">
+        <div class="container">
+            <div class="access-form">
+                <div class="page-header">
+                    <h3>注册 <small>完善帐号信息</small></h3>
                 </div>
+                <?php if($emailVerify['token'] !== $tokenGet): ?>
+                    <div class="alert alert-danger">验证邮件校验失败！您可以尝试 <a href="/?c=access&a=register">重新发送</a></div>
+                <?php else: ?>
+                    <form id="registerVerifyForm" action="javascript:;">
+                        <div id="alertSuccess" class="alert alert-success" style="display:none;"></div>
+                        <div id="alertDanger" class="alert alert-danger" style="display:none;"></div>
+                        <div class="form-group">
+                            <label>邮箱地址</label>
+                            <input class="form-control" type="text" value="<?php echo $emailVerify['email']; ?>" readonly disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input id="password" name="password" class="form-control" type="password" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <label>再输一次密码</label>
+                            <input id="passwordConfirm" name="passwordConfirm" class="form-control" type="password" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <label>昵称</label>
+                            <input id="nickname" name="nickname" class="form-control" type="text" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <input id="submit" class="btn btn-primary" type="submit" value="完成注册">
+                        </div>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
     </div>

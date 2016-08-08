@@ -14,6 +14,11 @@ class BlogController extends ControllerAbstract
     private $_user = null;
 
     /**
+     * @var array 当前博客主题
+     */
+    private $_theme = null;
+
+    /**
      * 构造器
      *
      * @param Request $requestInstance
@@ -25,7 +30,7 @@ class BlogController extends ControllerAbstract
         $userId = $requestInstance->getGlobalVariable('get', 'userId', 0);
 
         // 博主
-        $user = Application::getInstance()->getModelInstance('user')->getById($userId);
+        $user = Application::getInstance()->getModelInstance('user')->getByPK($userId);
         if ($user === false) {
             throw new \Exception('用户信息获取失败', 10029);
         }
@@ -34,6 +39,12 @@ class BlogController extends ControllerAbstract
         }
         if (intval($user['status']) !== UserModel::STATUS_NORMAL) {
             throw new \Exception('用户状态异常', 10031);
+        }
+
+        // 主题
+        $theme = Application::getInstance()->getModelInstance('theme')->getByPK($user['theme_id']);
+        if ($theme !== false && !empty($theme) && intval($theme['status']) === ThemeModel::STATUS_NORMAL) {
+            $this->_theme = $theme;
         }
 
         $this->_user = $user;
@@ -63,8 +74,13 @@ class BlogController extends ControllerAbstract
      */
     public function postListAction(Request $requestInstance, Response $responseInstance)
     {
-        $categoryId = $requestInstance->getGlobalVariable('get', 'categoryId', 0, 'intval');
-        $page = $requestInstance->getGlobalVariable('get', 'page', 1, 'intval');
+        // get
+        $categoryId = $requestInstance->getGlobalVariable('get', 'categoryId', 0);
+        $page = $requestInstance->getGlobalVariable('get', 'page', 1);
+
+        // get 处理
+        $categoryId = intval($categoryId);
+        $page = intval($page);
 
         // 当前分类
         $category = [];
@@ -96,6 +112,7 @@ class BlogController extends ControllerAbstract
               'page' => $page
             ],
             'user' => $this->_user,
+            'theme' => $this->_theme,
             'category' => $category,
             'data' => $data,
             'categoryList' => $categoryList

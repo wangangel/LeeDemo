@@ -47,7 +47,7 @@ if (!is_file($runtimeFile)) {
         ['cache/CacheInterface', 'cache/MemcacheX'],
         ['common/function'],
         ['database/DatabaseInterface', 'database/MysqliX'],
-        ['Application', 'Config', 'ControllerAbstract', 'Log', 'ModelAbstract', 'Request', 'Response', 'Router', 'Session', 'View']
+        ['Application', 'Config', 'ControllerAbstract', 'Log', 'ModelAbstract', 'Request', 'Response', 'Router', 'ServiceAbstract', 'Session', 'View']
     );
     $cache = null;
     foreach ($libraries as $file) {

@@ -358,6 +358,7 @@ final class Application
     private $_cacheInstanceArray = [];
     private $_databaseInstanceArray = [];
     private $_modelInstanceArray = [];
+    private $_serviceInstanceArray = [];
     public static function getInstance()
     {
         if (self::$_instance === null) {
@@ -471,6 +472,22 @@ final class Application
         }
         return $this->_modelInstanceArray[$modelName];
     }
+    public function getServiceInstance($serviceName)
+    {
+        $serviceName = ucfirst($serviceName) . 'Service';
+        if (!isset($this->_serviceInstanceArray[$serviceName])) {
+            $serviceFile = ROOT . '/application/service/' . $serviceName . '.php';
+            if (!is_file($serviceFile)) {
+                throw new \Exception($serviceFile, 10039);
+            }
+            require $serviceFile;
+            if (!class_exists($serviceName, false)) {
+                throw new \Exception($serviceName, 10040);
+            }
+            $this->_serviceInstanceArray[$serviceName] = new $serviceName();
+        }
+        return $this->_serviceInstanceArray[$serviceName];
+    }
 }
 final class Config
 {
@@ -533,7 +550,6 @@ abstract class ControllerAbstract
         // json 格式（成功状态）
         return json_encode([
             'status' => true,
-            'code' => '',
             'data' => $data
         ]);
     }
@@ -553,14 +569,37 @@ abstract class ControllerAbstract
         $responseInstance->setHeader('Location', $url);
         return true;
     }
+    public function captchaCheck($captcha)
+    {
+        $check = !empty($_SESSION['captcha']) && is_string($captcha) && $_SESSION['captcha'] === strtolower($captcha);
+        // 每次校验后，session captcha 都必须销毁，防止校验成功后，不刷新验证码而一直使用这个有效的验证码来绕过校验
+        $_SESSION['captcha'] = null;
+        return $check;
+    }
 }
 abstract class ModelAbstract
 {
     protected $_databaseInstance = null;
     protected $_tableName = '';
+    protected $_pk = 'id';
     public function __construct()
     {
         $this->_databaseInstance = Application::getInstance()->getDatabaseInstance();
+    }
+    public function getByPK($value)
+    {
+        $ret = $this->_databaseInstance
+            ->table($this->_tableName)
+            ->where($this->_pk, 'eq', $value)
+            ->limit(1)
+            ->select();
+        return $ret !== false && !empty($ret) ? $ret[0] : $ret;
+    }
+    public function addOne($data)
+    {
+        return $this->_databaseInstance
+            ->table($this->_tableName)
+            ->insert($data);
     }
 }
 final class Request
@@ -694,6 +733,9 @@ final class Router
         $requestInstance->setControllerName($controllerName)->setActionName($actionName);
     }
 }
+abstract class ServiceAbstract
+{
+}
 final class Session implements \SessionHandlerInterface
 {
     private $_cacheInstance = null;
@@ -742,7 +784,7 @@ final class View
         if (!is_file($viewFile)) {
             throw new \Exception($viewFile, 10009);
         }
-        include($viewFile);
+        require $viewFile;
         $ret = ob_get_clean();
         return $ret;
     }

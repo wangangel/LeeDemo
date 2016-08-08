@@ -110,7 +110,7 @@ class PostModel extends ModelAbstract
                 'title' => $title,
                 'description' => $description,
                 'status' => 2,
-                'time_add' => time()
+                'time_publish' => time()
             ]);
     }
 

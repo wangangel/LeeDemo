@@ -4,33 +4,31 @@
     <meta charset="UTF-8">
     <title>发送验证邮件 - 注册</title>
     <link rel="stylesheet" type="text/css" href="/vendor/bootstrap-3.3.5-dist/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/asset/v1.0/css/style.css">
 </head>
 <body>
-    <div class="BL_wrap">
-        <div class="BL_content">
-            <div class="BL_main">
-                <div class="access-form">
-                    <div class="page-header">
-                        <h3>注册 <small>发送验证邮件</small></h3>
-                    </div>
-                    <form id="registerForm" action="javascript:;">
-                        <div id="alertSuccess" class="alert alert-success" style="display:none;"></div>
-                        <div id="alertDanger" class="alert alert-danger" style="display:none;"></div>
-                        <div class="form-group">
-                            <label>邮箱地址</label>
-                            <input id="email" name="email" class="form-control" type="text" maxlength="50">
-                        </div>
-                        <div class="form-group captcha">
-                            <label>验证码</label>
-                            <input id="captcha" name="captcha" class="form-control" type="text" maxlength="5">
-                            <span class="captcha-image"><img id="captchaImage" src="/?a=captcha" title="点击更换验证码" onclick="this.src='/?a=captcha&refresh='+Math.random();"></span>
-                        </div>
-                        <div class="form-group">
-                            <input id="submit" class="btn btn-primary" type="submit" value="发送验证邮件">
-                        </div>
-                    </form>
+    <div class="wrap">
+        <div class="container">
+            <div class="access-form">
+                <div class="page-header">
+                    <h3>注册 <small>发送验证邮件</small></h3>
                 </div>
+                <form id="registerForm" action="javascript:;">
+                    <div id="alertSuccess" class="alert alert-success" style="display:none;"></div>
+                    <div id="alertDanger" class="alert alert-danger" style="display:none;"></div>
+                    <div class="form-group">
+                        <label>邮箱地址</label>
+                        <input id="email" name="email" class="form-control" type="text" maxlength="50">
+                    </div>
+                    <div class="form-group captcha">
+                        <label>验证码</label>
+                        <input id="captcha" name="captcha" class="form-control" type="text" maxlength="5">
+                        <span class="captcha-image"><img id="captchaImage" src="/?a=captcha" title="点击更换验证码" onclick="this.src='/?a=captcha&refresh='+Math.random();"></span>
+                    </div>
+                    <div class="form-group">
+                        <input id="submit" class="btn btn-primary" type="submit" value="发送验证邮件">
+                    </div>
+                </form>
             </div>
         </div>
     </div>

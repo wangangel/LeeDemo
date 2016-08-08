@@ -26,7 +26,6 @@ abstract class ControllerAbstract
         // json 格式（成功状态）
         return json_encode([
             'status' => true,
-            'code' => '',
             'data' => $data
         ]);
     }
@@ -65,5 +64,21 @@ abstract class ControllerAbstract
         $responseInstance->setHeader('Location', $url);
 
         return true;
+    }
+
+    /**
+     * 验证码校验
+     *
+     * @param string $captcha
+     * @return bool
+     */
+    public function captchaCheck($captcha)
+    {
+        $check = !empty($_SESSION['captcha']) && is_string($captcha) && $_SESSION['captcha'] === strtolower($captcha);
+
+        // 每次校验后，session captcha 都必须销毁，防止校验成功后，不刷新验证码而一直使用这个有效的验证码来绕过校验
+        $_SESSION['captcha'] = null;
+
+        return $check;
     }
 }

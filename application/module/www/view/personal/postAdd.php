@@ -2,40 +2,66 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>发布日志</title>
+    <title>写日志 - 发布 - 个人中心</title>
     <link rel="stylesheet" type="text/css" href="/vendor/bootstrap-3.3.5-dist/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="/vendor/summernote-0.8.1-dist/summernote.css">
-    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/asset/v1.0/css/style.css">
 </head>
 <body class="personal">
-    <div class="BL_wrap">
-        <div class="BL_content">
+    <div class="wrap">
+        <div class="container">
             <?php include dirname(__DIR__) . '/top.php' ; ?>
             <?php include dirname(__DIR__) . '/personal_header.php' ; ?>
-            <form id="postAddForm" action="javascript:;">
-                <div id="alertSuccess" class="alert alert-success" style="display:none;"></div>
-                <div id="alertDanger" class="alert alert-danger" style="display:none;"></div>
-                <div class="form-group">
-                    <label>日志标题</label>
-                    <input id="title" name="title" class="form-control" type="text" maxlength="100">
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="list-group">
+                        <a href="javascript:;" class="list-group-item disabled"><strong>发布</strong></a>
+                        <a href="/?c=personal&a=postAdd" class="list-group-item active">写日志</a>
+                        <a href="#" class="list-group-item">传照片</a>
+                        <a href="javascript:;" class="list-group-item disabled"><strong>好友</strong></a>
+                        <a href="#" class="list-group-item">博友</a>
+                        <a href="#" class="list-group-item">访客</a>
+                        <a href="#" class="list-group-item">黑名单</a>
+                        <a href="javascript:;" class="list-group-item disabled"><strong>设置</strong></a>
+                        <a href="#" class="list-group-item">个人信息</a>
+                        <a href="/?c=personal&a=access" class="list-group-item">权限</a>
+                        <a href="#" class="list-group-item">帐号</a>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>选择分类</label>
-                    <select id="categoryId" class="form-control">
-                        <option value="0">默认分类</option>
-                        <?php foreach($categories as $category): ?>
-                            <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                <div class="col-md-10">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">写日志</h3>
+                        </div>
+                        <div class="panel-body">
+                            <form id="postAddForm" action="javascript:;">
+                                <div id="alertSuccess" class="alert alert-success" style="display:none;"></div>
+                                <div id="alertDanger" class="alert alert-danger" style="display:none;"></div>
+                                <div class="form-group">
+                                    <label>日志标题</label>
+                                    <input id="title" name="title" class="form-control" type="text" maxlength="100">
+                                </div>
+                                <div class="form-group">
+                                    <label>选择分类</label>
+                                    <select id="categoryId" class="form-control">
+                                        <option value="0">默认分类</option>
+                                        <?php foreach($categories as $category): ?>
+                                            <option value="<?php echo $category['id']; ?>"><?php echo $category['name']; ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>日志正文</label>
+                                    <div id="body"></div>
+                                </div>
+                                <div class="form-group">
+                                    <input id="submit" type="submit" class="btn btn-success" value="发布日志">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>日志正文</label>
-                    <div id="body"></div>
-                </div>
-                <div class="form-group">
-                    <input id="submit" type="submit" class="btn btn-primary" value="发布日志">
-                </div>
-            </form>
+            </div>
         </div>
     </div>
     <script src="/vendor/jquery/jquery-3.1.0.min.js"></script>

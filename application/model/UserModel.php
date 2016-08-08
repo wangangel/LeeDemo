@@ -21,16 +21,16 @@ class UserModel extends ModelAbstract
     protected $_tableName = 'user';
 
     /**
-     * 根据 id 获取用户
+     * 根据 email 获取用户
      *
-     * @param int $userId
+     * @param string $email
      * @return mixed
      */
-    public function getById($userId)
+    public function getByEmail($email)
     {
         $user = $this->_databaseInstance
             ->table($this->_tableName)
-            ->where('id', 'eq', $userId)
+            ->where('email', 'eq', $email)
             ->limit(1)
             ->select();
 
@@ -48,23 +48,6 @@ class UserModel extends ModelAbstract
         $user = $this->_databaseInstance
             ->table($this->_tableName)
             ->where('nickname', 'eq', $nickname)
-            ->limit(1)
-            ->select();
-
-        return $user !== false && !empty($user) ? $user[0] : $user;
-    }
-
-    /**
-     * 根据 email 获取用户
-     *
-     * @param string $email
-     * @return mixed
-     */
-    public function getByEmail($email)
-    {
-        $user = $this->_databaseInstance
-            ->table($this->_tableName)
-            ->where('email', 'eq', $email)
             ->limit(1)
             ->select();
 
@@ -117,27 +100,6 @@ class UserModel extends ModelAbstract
             ->where('id', 'eq', $userId)
             ->update([
                 'count_normal_post' => $update
-            ]);
-    }
-
-    /**
-     * 插入一条记录
-     *
-     * @param string $email
-     * @param string $password
-     * @param string $nickname
-     * @return mixed
-     */
-    public function addOne($email, $password, $nickname)
-    {
-        return $this->_databaseInstance
-            ->table($this->_tableName)
-            ->insert([
-                'email' => $email,
-                'password' => $password,
-                'nickname' => $nickname,
-                'status' => 2,
-                'time_register' => time()
             ]);
     }
 }

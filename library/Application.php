@@ -39,6 +39,11 @@ final class Application
     private $_modelInstanceArray = [];
 
     /**
+     * @var array 服务对象数组
+     */
+    private $_serviceInstanceArray = [];
+
+    /**
      * 获取当前类对象
      *
      * @return Application
@@ -257,5 +262,34 @@ final class Application
         }
 
         return $this->_modelInstanceArray[$modelName];
+    }
+
+    /**
+     * 获取模型对象
+     *
+     * 使用：getServiceInstance('user') 则创建 UserService
+     *
+     * @param string $serviceName
+     * @return ServiceAbstract
+     * @throws Exception
+     */
+    public function getServiceInstance($serviceName)
+    {
+        $serviceName = ucfirst($serviceName) . 'Service';
+
+        if (!isset($this->_serviceInstanceArray[$serviceName])) {
+            $serviceFile = ROOT . '/application/service/' . $serviceName . '.php';
+            if (!is_file($serviceFile)) {
+                throw new \Exception($serviceFile, 10039);
+            }
+            require $serviceFile;
+            if (!class_exists($serviceName, false)) {
+                throw new \Exception($serviceName, 10040);
+            }
+
+            $this->_serviceInstanceArray[$serviceName] = new $serviceName();
+        }
+
+        return $this->_serviceInstanceArray[$serviceName];
     }
 }

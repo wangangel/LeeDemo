@@ -19,10 +19,44 @@ abstract class ModelAbstract
     protected $_tableName = '';
 
     /**
+     * @var string 主键
+     */
+    protected $_pk = 'id';
+
+    /**
      * 构造器
      */
     public function __construct()
     {
         $this->_databaseInstance = Application::getInstance()->getDatabaseInstance();
+    }
+
+    /**
+     * 根据主键获取一条结果
+     *
+     * @return mixed
+     */
+    public function getByPK($value)
+    {
+        $ret = $this->_databaseInstance
+            ->table($this->_tableName)
+            ->where($this->_pk, 'eq', $value)
+            ->limit(1)
+            ->select();
+
+        return $ret !== false && !empty($ret) ? $ret[0] : $ret;
+    }
+
+    /**
+     * 添加一条记录
+     *
+     * @param array $data
+     * @return mixed
+     */
+    public function addOne($data)
+    {
+        return $this->_databaseInstance
+            ->table($this->_tableName)
+            ->insert($data);
     }
 }

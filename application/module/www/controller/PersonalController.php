@@ -28,6 +28,14 @@ class PersonalController extends ControllerAbstract
     }
 
     /**
+     * 首页
+     */
+    public function indexAction()
+    {
+
+    }
+
+    /**
      * 发布日志
      *
      * @param Request $requestInstance
@@ -123,6 +131,22 @@ class PersonalController extends ControllerAbstract
             'user' => $this->_user,
             'post' => $post
         ];
+    }
+
+    /**
+     * 好友 - 博友
+     */
+    public function friendAction()
+    {
+
+    }
+
+    /**
+     * 设置 - 权限
+     */
+    public function accessAction()
+    {
+
     }
 
     /**

@@ -41,7 +41,7 @@ final class View
         if (!is_file($viewFile)) {
             throw new \Exception($viewFile, 10009);
         }
-        include($viewFile);
+        require $viewFile;
         $ret = ob_get_clean();
 
         return $ret;

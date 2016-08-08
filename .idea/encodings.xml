@@ -3,10 +3,9 @@
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
     <file url="file://$PROJECT_DIR$/library/vendor/Captcha-master" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/library/vendor/PHPMailer-master" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/public/www/css/bootstrap.min.css" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/public/www/images/access-bg.jpg" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/public/www/images/bg.png" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/public/www/images/dot.gif" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/public/www/images/line.gif" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/public/www/asset/v1.0/images/access-bg.jpg" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/public/www/asset/v1.0/images/bg.png" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/public/www/asset/v1.0/images/dot.gif" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/public/www/asset/v1.0/images/line.gif" charset="UTF-8" />
   </component>
 </project>
